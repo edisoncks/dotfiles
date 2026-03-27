@@ -1,0 +1,7 @@
+[tools]
+"github:bpozdena/OneDriveGUI" = "latest"
+"github:mikeleppane/envx" = "latest"
+"github:pkgforge-dev/ghostty-appimage" = "latest"
+"github:rgwood/systemctl-tui" = "latest"
+node = "24"
+"npm:tree-sitter-cli" = "latest"

@@ -1,4 +1,5 @@
 [tools]
+bun = "latest"
 "github:bpozdena/OneDriveGUI" = "latest"
 "github:mikeleppane/envx" = "latest"
 "github:pkgforge-dev/ghostty-appimage" = "latest"

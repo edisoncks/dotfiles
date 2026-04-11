@@ -1,7 +1,6 @@
 [tools]
 bun = "latest"
 "github:mikeleppane/envx" = "latest"
-"github:pkgforge-dev/ghostty-appimage" = "latest"
 "github:rgwood/systemctl-tui" = "latest"
 node = "25"
 "npm:tree-sitter-cli" = "latest"

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "API_TIMEOUT_MS": "3000000",
+    "ANTHROPIC_BASE_URL": "https://opencode.ai/zen/go",
+    "_ANTHROPIC_API_KEY_": "provided separately to avoid leak through git commit",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "minimax-m2.7",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "minimax-m2.7",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "minimax-m2.5",
+    "DISABLE_ERROR_REPORTING": "1",
+    "DISABLE_EXTRA_USAGE_COMMAND": "1",
+    "DISABLE_FEEDBACK_COMMAND": "1",
+    "DISABLE_LOGIN_COMMAND": "1",
+    "DISABLE_LOGOUT_COMMAND": "1",
+    "DISABLE_TELEMETRY": "1"
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "availableModels": ["minimax-m2.7", "minimax-m2.5"],
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  }
+}

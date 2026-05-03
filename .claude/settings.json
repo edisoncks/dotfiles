@@ -18,9 +18,13 @@
     "commit": "",
     "pr": ""
   },
-  "availableModels": ["minimax-m2.7", "minimax-m2.5"],
+  "availableModels": [
+    "minimax-m2.7",
+    "minimax-m2.5"
+  ],
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
-  }
+  },
+  "tui": "fullscreen"
 }

@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD013 -->
-
 # 🗃️ edisoncks's dotfiles
 
 ![Platform](https://img.shields.io/badge/platform-Linux-blue?logo=archlinux) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/edisoncks/dotfiles/main?logo=github)

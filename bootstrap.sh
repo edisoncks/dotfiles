@@ -4,7 +4,11 @@
 if command -v brew >/dev/null 2>&1; then
 	echo "✅ Homebrew is installed"
 else
-	echo "⛔ Homebrew not found"
+	echo "⌛ Installing homebrew..."
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+if ! command -v brew >/dev/null 2>&1; then
+	echo "❌ Homebrew installation failed"
 	exit 1
 fi
 

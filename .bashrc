@@ -30,6 +30,7 @@ HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
 if ! [[ "$PATH" =~ "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin" ]]; then
 	export PATH="$PATH:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin"
 fi
+export HOMEBREW_NO_ASK=1
 
 # Mise
 eval "$(mise activate bash)"

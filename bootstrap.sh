@@ -32,6 +32,7 @@ declare -a DOTFILES=(
 )
 for i in "${DOTFILES[@]}"; do
 	DOTFILE="$DIR/$i"
+	mkdir -p "$(dirname "$HOME/$i")"
 	mv "$HOME/$i" "$HOME/$i.bak" >/dev/null 2>&1
 	ln -s "$DOTFILE" "$HOME/$i"
 	echo "✅ Created symlinks for ~/$i"

@@ -46,6 +46,7 @@ brew install \
 	bbrew \
 	bottom \
 	btop \
+	fastfetch \
 	fd \
 	ffmpeg-full \
 	font-symbols-only-nerd-font \

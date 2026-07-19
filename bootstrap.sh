@@ -44,6 +44,7 @@ brew install \
 	fd \
 	ffmpeg-full \
 	fzf \
+	gh \
 	git-delta \
 	imagemagick-full \
 	jq \

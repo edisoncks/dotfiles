@@ -61,6 +61,7 @@ brew install \
 	ripgrep \
 	screen \
 	sevenzip \
+	tree-sitter-cli \
 	wgcf \
 	yazi \
 	zoxide

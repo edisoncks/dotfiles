@@ -47,6 +47,7 @@ brew install \
 	btop \
 	fd \
 	ffmpeg-full \
+	font-symbols-only-nerd-font \
 	fzf \
 	gh \
 	git-delta \
@@ -70,6 +71,7 @@ brew install \
 	wgcf \
 	yazi \
 	zoxide
+brew link ffmpeg-full imagemagick-full -f --overwrite
 echo "✅ Installed homebrew packages"
 
 # Install mise packages

@@ -4,8 +4,12 @@
 
 ## 🛠️ Prerequisites
 
-1. [Homebrew](https://brew.sh/)
-2. [Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/Mononoki)
+1. [Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/Mononoki)
+2. Increase open file descriptor limit to at least 10240 before running the bootstrap script:
+
+   ```bash
+   ulimit -n 10240
+   ```
 
 ## 📥 Getting started
 

@@ -43,39 +43,7 @@ done
 source "$HOME/.bash_profile"
 
 # Install homebrew packages
-brew install \
-	aria2 \
-	bat \
-	bbrew \
-	bottom \
-	btop \
-	fastfetch \
-	fd \
-	ffmpeg-full \
-	font-symbols-only-nerd-font \
-	fzf \
-	gh \
-	git-delta \
-	imagemagick-full \
-	jq \
-	lazygit \
-	mise \
-	mpv \
-	neovide \
-	neovim \
-	nvtop \
-	onedrive-cli \
-	opencode \
-	podman-tui \
-	poppler \
-	resvg \
-	ripgrep \
-	screen \
-	sevenzip \
-	tree-sitter-cli \
-	wgcf \
-	yazi \
-	zoxide
+brew bundle --file="$DIR/Brewfile"
 brew link ffmpeg-full imagemagick-full -f --overwrite
 echo "✅ Installed homebrew packages"
 

@@ -36,7 +36,7 @@ export HOMEBREW_NO_ASK=1
 eval "$(mise activate bash)"
 
 # EDITOR
-export EDITOR="$(brew --prefix)/bin/nvim"
+export EDITOR="$HOMEBREW_PREFIX/bin/nvim"
 
 # OpenCode
 export OPENCODE_ENABLE_EXA=1

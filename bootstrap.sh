@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Ensure homebrew is installed
 if command -v brew >/dev/null 2>&1; then
@@ -33,7 +34,7 @@ declare -a DOTFILES=(
 for i in "${DOTFILES[@]}"; do
 	DOTFILE="$DIR/$i"
 	mkdir -p "$(dirname "$HOME/$i")"
-	mv "$HOME/$i" "$HOME/$i.bak" >/dev/null 2>&1
+	mv "$HOME/$i" "$HOME/$i.bak" >/dev/null 2>&1 || true
 	ln -s "$DOTFILE" "$HOME/$i"
 	echo "✅ Created symlinks for ~/$i"
 done

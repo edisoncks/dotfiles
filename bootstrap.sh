@@ -37,7 +37,7 @@ for i in "${DOTFILES[@]}"; do
 	if [ -e "$HOME/$i" ] && [ ! -L "$HOME/$i" ]; then
 		mv "$HOME/$i" "$HOME/$i.bak"
 	fi
-	ln -s "$DOTFILE" "$HOME/$i"
+	ln -sf "$DOTFILE" "$HOME/$i"
 	echo "✅ Created symlinks for ~/$i"
 done
 source "$HOME/.bash_profile"

@@ -4,10 +4,10 @@
 
 local map = vim.keymap.set
 
--- -- opencode
-if vim.fn.executable("opencode") == 1 then
+-- pi coding agent
+if vim.fn.executable("pi") == 1 then
   map({ "n", "t" }, "<c-o>", function()
-    Snacks.terminal.focus("opencode", {
+    Snacks.terminal.focus("pi -c", {
       interactive = true,
       win = {
         position = "float",
@@ -17,21 +17,5 @@ if vim.fn.executable("opencode") == 1 then
         zindex = 50,
       },
     })
-  end, { desc = "OpenCode" })
+  end, { desc = "Pi Coding Agent" })
 end
-
--- claude
--- if vim.fn.executable("claude") == 1 then
---   map({ "n", "t" }, "<c-o>", function()
---     Snacks.terminal.focus("bash -ic 'clear && claude'", {
---       interactive = true,
---       win = {
---         position = "float",
---         backdrop = 60,
---         height = 0.9,
---         width = 0.95,
---         zindex = 50,
---       },
---     })
---   end, { desc = "Claude Code" })
--- end

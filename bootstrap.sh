@@ -40,7 +40,7 @@ for i in "${DOTFILES[@]}"; do
 	ln -s "$DOTFILE" "$HOME/$i"
 	echo "✅ Created symlinks for ~/$i"
 done
-source $HOME/.bash_profile
+source "$HOME/.bash_profile"
 
 # Install homebrew packages
 brew install \

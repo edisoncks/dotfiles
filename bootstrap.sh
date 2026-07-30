@@ -26,6 +26,7 @@ declare -a DOTFILES=(
 	".config/mpv"
 	".config/neovide"
 	".config/nvim"
+	".config/topgrade.toml"
 	".config/yazi"
 	".bash_profile"
 	".bashrc"

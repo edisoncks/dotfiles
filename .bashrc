@@ -31,6 +31,7 @@ if ! [[ "$PATH" =~ "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin" ]]; then
 	export PATH="$PATH:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin"
 fi
 export HOMEBREW_NO_ASK=1
+export HOMEBREW_NO_ANALYTICS=1
 
 # Mise
 if command -v mise >/dev/null 2>&1; then

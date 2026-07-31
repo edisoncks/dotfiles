@@ -15,6 +15,7 @@ if ! [[ "$PATH" =~ "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin" ]]; then
 	export PATH="$PATH:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin"
 fi
 export HOMEBREW_NO_ASK=1
+export HOMEBREW_NO_ANALYTICS=1
 
 if ! command -v brew >/dev/null 2>&1; then
 	echo "❌ Homebrew installation failed"
@@ -42,7 +43,7 @@ for i in "${DOTFILES[@]}"; do
 	DOTFILE="$DIR/$i"
 	mkdir -p "$(dirname "$HOME/$i")"
 	if [ -L "$HOME/$i" ] && [ "$(readlink "$HOME/$i")" = "$DOTFILE" ]; then
-		continue  # already linked correctly — nothing to do
+		continue # already linked correctly — nothing to do
 	fi
 	if [ -e "$HOME/$i" ] && [ ! -L "$HOME/$i" ]; then
 		backup="$HOME/$i.bak.$(date +%s)"

@@ -8,6 +8,11 @@ else
 	echo "⌛ Installing homebrew..."
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
+# Put brew on PATH for this script (a fresh install isn't on PATH in this shell yet)
+HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
+if ! command -v brew >/dev/null 2>&1 && [ -x "$HOMEBREW_PREFIX/bin/brew" ]; then
+	eval "$("$HOMEBREW_PREFIX/bin/brew" shellenv)"
+fi
 if ! command -v brew >/dev/null 2>&1; then
 	echo "❌ Homebrew installation failed"
 	exit 1
@@ -39,7 +44,6 @@ for i in "${DOTFILES[@]}"; do
 	ln -sf "$DOTFILE" "$HOME/$i"
 	echo "✅ Created symlinks for ~/$i"
 done
-source "$HOME/.bash_profile"
 
 # Install homebrew packages
 brew bundle --file="$DIR/Brewfile"
@@ -50,4 +54,6 @@ echo "✅ Installed homebrew packages"
 mise install
 echo "✅ Installed mise packages"
 
+# Reminder for the user's interactive shell only; the script itself is self-contained
+# (aliases, mise activate, etc. are loaded by sourcing ~/.bash_profile)
 echo "🚀 Done. Run 'source ~/.bash_profile' in this shell to pick up the new environment immediately (or just open a new terminal)."

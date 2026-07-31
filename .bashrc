@@ -33,7 +33,9 @@ fi
 export HOMEBREW_NO_ASK=1
 
 # Mise
-eval "$(mise activate bash)"
+if command -v mise >/dev/null 2>&1; then
+	eval "$(mise activate bash)"
+fi
 
 # EDITOR
 export EDITOR="$HOMEBREW_PREFIX/bin/nvim"

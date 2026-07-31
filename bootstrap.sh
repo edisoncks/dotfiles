@@ -41,6 +41,9 @@ declare -a DOTFILES=(
 for i in "${DOTFILES[@]}"; do
 	DOTFILE="$DIR/$i"
 	mkdir -p "$(dirname "$HOME/$i")"
+	if [ -L "$HOME/$i" ] && [ "$(readlink "$HOME/$i")" = "$DOTFILE" ]; then
+		continue  # already linked correctly — nothing to do
+	fi
 	if [ -e "$HOME/$i" ] && [ ! -L "$HOME/$i" ]; then
 		backup="$HOME/$i.bak.$(date +%s)"
 		mv "$HOME/$i" "$backup"

@@ -16,5 +16,7 @@
 Install packages and create symlinks.
 
 ```bash
-source bootstrap.sh
+bash bootstrap.sh
+# then, to apply in the current shell:
+source ~/.bash_profile
 ```

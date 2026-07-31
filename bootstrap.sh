@@ -49,3 +49,5 @@ echo "✅ Installed homebrew packages"
 # Install mise packages
 mise install
 echo "✅ Installed mise packages"
+
+echo "🚀 Done. Run 'source ~/.bash_profile' in this shell to pick up the new environment immediately (or just open a new terminal)."

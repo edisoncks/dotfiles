@@ -42,7 +42,9 @@ for i in "${DOTFILES[@]}"; do
 	DOTFILE="$DIR/$i"
 	mkdir -p "$(dirname "$HOME/$i")"
 	if [ -e "$HOME/$i" ] && [ ! -L "$HOME/$i" ]; then
-		mv "$HOME/$i" "$HOME/$i.bak.$(date +%s)"
+		backup="$HOME/$i.bak.$(date +%s)"
+		mv "$HOME/$i" "$backup"
+		echo "🗂️  Backed up ~/$i to $backup"
 	fi
 	ln -sf "$DOTFILE" "$HOME/$i"
 	echo "✅ Created symlinks for ~/$i"

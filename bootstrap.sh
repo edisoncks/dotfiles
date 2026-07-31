@@ -8,11 +8,14 @@ else
 	echo "⌛ Installing homebrew..."
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
-# Put brew on PATH for this script (a fresh install isn't on PATH in this shell yet)
+
+# Ensure homebrew binary is in PATH (a fresh install isn't on this shell's PATH yet)
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
-if ! command -v brew >/dev/null 2>&1 && [ -x "$HOMEBREW_PREFIX/bin/brew" ]; then
-	eval "$("$HOMEBREW_PREFIX/bin/brew" shellenv)"
+if ! [[ "$PATH" =~ "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin" ]]; then
+	export PATH="$PATH:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin"
 fi
+export HOMEBREW_NO_ASK=1
+
 if ! command -v brew >/dev/null 2>&1; then
 	echo "❌ Homebrew installation failed"
 	exit 1

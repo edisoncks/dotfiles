@@ -1,6 +1,3 @@
-# Casks
-cask "font-symbols-only-nerd-font"
-
 # Formulae
 brew "aria2"
 brew "bat"

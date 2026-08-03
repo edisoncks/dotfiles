@@ -3,8 +3,16 @@ import type { Model } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 import { spawnSync } from "child_process";
 import { readFileSync } from "fs";
+import { release } from "node:os";
 
 export default function (pi: ExtensionAPI) {
+  const isRunningInWsl =
+    process.platform === "linux" && /microsoft|wsl/i.test(release());
+
+  if (!isRunningInWsl) {
+    return;
+  }
+
   // Enable/disable screenshot tool based on model vision capability
   const updateTool = (model: Model | undefined) => {
     const hasVision = model?.input?.includes("image") ?? false;

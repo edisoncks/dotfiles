@@ -37,6 +37,7 @@ declare -a DOTFILES=(
 	".config/yazi"
 	".pi/agent/settings.json"
 	".pi/agent/keybindings.json"
+	".pi/agent/pi-statusline.json"
 	".pi/agent/extensions"
 	".pi/agent/prompts"
 	".bash_profile"

@@ -1,0 +1,30 @@
+{
+  "lastChangelogVersion": "0.83.0",
+  "theme": "dark",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "gpt-5.6-luna",
+  "defaultThinkingLevel": "max",
+  "transport": "auto",
+  "enableInstallTelemetry": false,
+  "treeFilterMode": "default",
+  "enabledModels": [
+    "xiaomi/mimo-v2.5",
+    "xiaomi/mimo-v2.5-pro",
+    "opencode/mimo-v2.5-free",
+    "opencode/big-pickle",
+    "deepseek/deepseek-v4-flash",
+    "deepseek/deepseek-v4-pro",
+    "opencode/deepseek-v4-flash-free",
+    "opencode-go/gpt-5.6-luna",
+    "opencode-go/deepseek-v4-pro",
+    "opencode-go/mimo-v2.5-pro",
+    "opencode-go/kimi-k3",
+    "opencode-go/glm-5.2"
+  ],
+  "hideThinkingBlock": true,
+  "packages": [
+    "npm:@narumitw/pi-btw",
+    "npm:@narumitw/pi-statusline"
+  ],
+  "editorPaddingX": 1
+}

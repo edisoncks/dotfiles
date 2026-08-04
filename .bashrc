@@ -41,6 +41,11 @@ fi
 # EDITOR
 export EDITOR="$HOMEBREW_PREFIX/bin/nvim"
 
+# Alacritty
+if [[ "$ALACRITTY_TERM" == 1 ]]; then
+	export TERM=alacritty
+fi
+
 # OpenCode
 export OPENCODE_ENABLE_EXA=1
 

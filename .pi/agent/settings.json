@@ -1,17 +1,15 @@
 {
-  "lastChangelogVersion": "0.83.0",
+  "lastChangelogVersion": "0.84.1",
   "theme": "dark",
-  "defaultProvider": "opencode-go",
-  "defaultModel": "gpt-5.6-luna",
-  "defaultThinkingLevel": "max",
+  "defaultProvider": "ollama",
+  "defaultModel": "gemma4:12b",
+  "defaultThinkingLevel": "high",
   "transport": "auto",
   "enableInstallTelemetry": false,
   "treeFilterMode": "default",
   "enabledModels": [
     "xiaomi/mimo-v2.5",
     "xiaomi/mimo-v2.5-pro",
-    "opencode/mimo-v2.5-free",
-    "opencode/big-pickle",
     "deepseek/deepseek-v4-flash",
     "deepseek/deepseek-v4-pro",
     "opencode/deepseek-v4-flash-free",
@@ -19,12 +17,35 @@
     "opencode-go/deepseek-v4-pro",
     "opencode-go/mimo-v2.5-pro",
     "opencode-go/kimi-k3",
-    "opencode-go/glm-5.2"
+    "opencode-go/grok-4.5",
+    "opencode-go/deepseek-v4-flash",
+    "opencode-go/mimo-v2.5",
+    "opencode-go/glm-5.3",
+    "ollama/gemma4:12b"
   ],
   "hideThinkingBlock": true,
   "packages": [
     "npm:@narumitw/pi-btw",
-    "npm:@narumitw/pi-statusline"
+    "npm:@narumitw/pi-statusline",
+    "npm:pi-cc-header",
+    "npm:@geminixiang/pi-mermaid",
+    "npm:pi-deepseek-search"
   ],
-  "editorPaddingX": 1
+  "editorPaddingX": 1,
+  "quietStartup": true,
+  "clearOnStart": true,
+  "ccHeader": {
+    "color": "b",
+    "ver": 1,
+    "grad": true,
+    "lines": true,
+    "pkg": false,
+    "speed": 100,
+    "slogan": "Code something that makes you proud",
+    "sloganOn": true,
+    "sloganColor": true,
+    "disabled": false
+  },
+  "tuiMode": "regular",
+  "fullscreenScrollbar": "auto"
 }

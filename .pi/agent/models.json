@@ -10,9 +10,9 @@
       },
       "models": [
         {
-          "id": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+          "id": "gemma4:12b-it-qat",
           "name": "Gemma 4 12B",
-          "reasoning": false,
+          "reasoning": true,
           "input": ["text", "image"],
           "contextWindow": 256000,
           "maxTokens": 32000,

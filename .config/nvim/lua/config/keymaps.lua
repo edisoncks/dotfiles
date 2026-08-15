@@ -7,7 +7,7 @@ local map = vim.keymap.set
 -- pi coding agent
 if vim.fn.executable("pi") == 1 then
   map({ "n", "t" }, "<c-o>", function()
-    Snacks.terminal.focus("pi -c", {
+    Snacks.terminal.focus("pi", {
       interactive = true,
       win = {
         position = "float",

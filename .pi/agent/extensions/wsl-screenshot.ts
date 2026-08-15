@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { Model } from "@earendil-works/pi-ai";
+import type { Model, Api } from "@earendil-works/pi-ai";
 import { Type } from "typebox";
 import { spawnSync } from "child_process";
 import { readFileSync } from "fs";
@@ -14,7 +14,7 @@ export default function (pi: ExtensionAPI) {
   }
 
   // Enable/disable screenshot tool based on model vision capability
-  const updateTool = (model: Model | undefined) => {
+  const updateTool = <TApi extends Api>(model: Model<TApi> | undefined) => {
     const hasVision = model?.input?.includes("image") ?? false;
     const active = pi.getActiveTools();
     const toolName = "screenshot";
@@ -46,7 +46,7 @@ export default function (pi: ExtensionAPI) {
       "Use screenshot when debugging visual issues or UI problems.",
     ],
     parameters: Type.Object({}),
-    async execute(_toolCallId, _params, signal, onUpdate, ctx) {
+    async execute(_toolCallId, _params, _signal, _onUpdate, _ctx) {
       // Generate output path
       const filename = `screenshot-${Date.now()}.png`;
       const wslPath = `/tmp/${filename}`;

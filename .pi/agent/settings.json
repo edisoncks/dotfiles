@@ -2,8 +2,8 @@
   "lastChangelogVersion": "0.84.1",
   "theme": "dark",
   "defaultProvider": "ollama",
-  "defaultModel": "hf.co/unsloth/Qwen3.8-27B-GGUF:Q3_K_M",
-  "defaultThinkingLevel": "low",
+  "defaultModel": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
+  "defaultThinkingLevel": "high",
   "transport": "auto",
   "enableInstallTelemetry": false,
   "treeFilterMode": "default",
@@ -20,7 +20,7 @@
     "opencode-go/deepseek-v4-flash",
     "opencode-go/mimo-v2.5",
     "opencode-go/glm-5.3",
-    "ollama/gemma4:12b"
+    "ollama/hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL"
   ],
   "hideThinkingBlock": true,
   "packages": [

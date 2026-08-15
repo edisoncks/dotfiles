@@ -10,9 +10,9 @@
       },
       "models": [
         {
-          "id": "gemma4:12b",
+          "id": "hf.co/unsloth/gemma-4-12B-it-qat-GGUF:UD-Q4_K_XL",
           "name": "Gemma 4 12B",
-          "reasoning": true,
+          "reasoning": false,
           "input": ["text", "image"],
           "contextWindow": 256000,
           "maxTokens": 32000,
@@ -24,31 +24,6 @@
             "minimal": null,
             "low": null,
             "medium": null,
-            "high": "high",
-            "xhigh": null,
-            "max": null
-          }
-        },
-        {
-          "id": "hf.co/unsloth/Qwen3.8-27B-GGUF:Q3_K_M",
-          "name": "Qwen 3.8 27B",
-          "reasoning": true,
-          "input": ["text", "image"],
-          "contextWindow": 256000,
-          "maxTokens": 32000,
-          "samplingParams": {
-            "temperature": 1.0,
-            "top_p": 0.95,
-            "top_k": 20,
-            "min_p": 0.0,
-            "presence_penalty": 0.0,
-            "repetition_penalty": 1.0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
             "high": "high",
             "xhigh": null,
             "max": null

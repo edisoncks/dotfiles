@@ -10,8 +10,8 @@
       },
       "models": [
         {
-          "id": "gemma4:12b-it-qat",
-          "name": "Gemma 4 12B",
+          "id": "gemma4:26b-a4b-it-qat",
+          "name": "Gemma 4 26B",
           "reasoning": true,
           "input": ["text", "image"],
           "contextWindow": 256000,

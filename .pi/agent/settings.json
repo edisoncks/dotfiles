@@ -20,7 +20,7 @@
     "opencode-go/deepseek-v4-flash",
     "opencode-go/mimo-v2.5",
     "opencode-go/glm-5.3",
-    "ollama/gemma4:12b-it-qat"
+    "ollama/gemma4:26b-a4b-it-qat"
   ],
   "hideThinkingBlock": true,
   "packages": [

@@ -1,9 +1,9 @@
 {
   "lastChangelogVersion": "0.84.1",
   "theme": "dark",
-  "defaultProvider": "ollama",
-  "defaultModel": "gemma4:12b-it-qat",
-  "defaultThinkingLevel": "high",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "deepseek-v4-flash",
+  "defaultThinkingLevel": "max",
   "transport": "auto",
   "enableInstallTelemetry": false,
   "treeFilterMode": "default",

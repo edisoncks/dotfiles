@@ -1,0 +1,3 @@
+.pi/agent/extensions/node_modules
+.pi/agent/extensions/package-lock.json
+.pi/agent/extensions/package.json

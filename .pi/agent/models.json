@@ -22,8 +22,8 @@
           "thinkingLevelMap": {
             "off": null,
             "minimal": null,
-            "low": null,
-            "medium": null,
+            "low": "low",
+            "medium": "medium",
             "high": "high",
             "xhigh": null,
             "max": null

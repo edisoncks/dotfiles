@@ -26,8 +26,7 @@
   "packages": [
     "npm:@narumitw/pi-btw",
     "npm:@narumitw/pi-statusline",
-    "npm:pi-cc-header",
-    "npm:@geminixiang/pi-mermaid"
+    "npm:pi-cc-header"
   ],
   "editorPaddingX": 1,
   "quietStartup": true,

@@ -1,8 +1,8 @@
 {
-  "lastChangelogVersion": "0.84.1",
+  "lastChangelogVersion": "0.84.2",
   "theme": "dark",
   "defaultProvider": "opencode-go",
-  "defaultModel": "deepseek-v4-flash",
+  "defaultModel": "ox-alpha-free",
   "defaultThinkingLevel": "max",
   "transport": "auto",
   "enableInstallTelemetry": false,
@@ -20,7 +20,10 @@
     "opencode-go/deepseek-v4-flash",
     "opencode-go/mimo-v2.5",
     "opencode-go/glm-5.3",
-    "ollama/gemma4:26b-a4b-it-qat"
+    "ollama/gemma4:26b-a4b-it-qat",
+    "opencode-go/hy3",
+    "opencode-go/muse-spark-1.2-contributor",
+    "opencode-go/ox-alpha-free"
   ],
   "hideThinkingBlock": true,
   "packages": [

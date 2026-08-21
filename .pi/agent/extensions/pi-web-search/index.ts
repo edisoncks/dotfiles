@@ -321,11 +321,10 @@ async function withDuckDuckGoRequestSlot<T>(
   }
 }
 
-function isDuckDuckGoChallenge(html: string): string | undefined {
-  if (/rate.?limit|too many requests|http\s*429/iu.test(html)) {
-    return "DuckDuckGo returned a rate-limit page";
-  }
-  if (/anomaly|captcha|challenge-form|Unfortunately, bots use DuckDuckGo/iu.test(html)) {
+export function detectDuckDuckGoChallenge(html: string): string | undefined {
+  // Structural markers only. Callers gate this on zero parsed results so that
+  // snippet text (e.g. a search about "HTTP 429") can never trip the breaker.
+  if (/challenge-form|anomaly|captcha|Unfortunately, bots use DuckDuckGo/iu.test(html)) {
     return "DuckDuckGo returned an anti-bot challenge page";
   }
   return undefined;
@@ -761,6 +760,26 @@ export function parseDuckDuckGoResults(
   return results;
 }
 
+export type DuckDuckGoClassification =
+  | { kind: "results"; results: WebSearchResult[] }
+  | { kind: "challenge"; reason: string }
+  | { kind: "drift" }
+  | { kind: "empty" };
+
+export function classifyDuckDuckGoResponse(
+  html: string,
+  allowedDomains: string[] = [],
+  blockedDomains: string[] = [],
+): DuckDuckGoClassification {
+  const results = parseDuckDuckGoResults(html, allowedDomains, blockedDomains);
+  if (results.length > 0) return { kind: "results", results };
+
+  const challenge = detectDuckDuckGoChallenge(html);
+  if (challenge) return { kind: "challenge", reason: challenge };
+  if (/uddg=/u.test(html)) return { kind: "drift" };
+  return { kind: "empty" };
+}
+
 function buildDuckDuckGoQuery(params: NormalizedSearchParams): string {
   const queryParts = [params.query];
 
@@ -808,17 +827,26 @@ async function fetchDuckDuckGoAttempt(
     throw new Error("Obscura returned empty DuckDuckGo HTML");
   }
 
-  const challenge = isDuckDuckGoChallenge(html);
-  if (challenge) {
-    const retryAt = markDuckDuckGoUnavailable(state);
-    throw new DuckDuckGoUnavailableError(challenge, retryAt);
-  }
-
-  const results = parseDuckDuckGoResults(
+  const classification = classifyDuckDuckGoResponse(
     html,
     params.allowedDomains,
     params.blockedDomains,
-  ).slice(0, params.numResults);
+  );
+
+  if (classification.kind === "challenge") {
+    const retryAt = markDuckDuckGoUnavailable(state);
+    throw new DuckDuckGoUnavailableError(classification.reason, retryAt);
+  }
+  if (classification.kind === "drift") {
+    throw new Error(
+      "DuckDuckGo returned results but none could be parsed; its markup likely changed. Use web_search_exa for this search.",
+    );
+  }
+
+  const results =
+    classification.kind === "results"
+      ? classification.results.slice(0, params.numResults)
+      : [];
 
   return {
     text: formatNumberedResults("DuckDuckGo", results),

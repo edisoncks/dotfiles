@@ -41,6 +41,7 @@ declare -a DOTFILES=(
 	".pi/agent/models.json"
 	".pi/agent/extensions"
 	".pi/agent/prompts"
+	".pi/agent/skills"
 	".bash_profile"
 	".bashrc"
 	".gitconfig"

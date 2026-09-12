@@ -24,6 +24,11 @@ if [ -d ~/.bashrc.d ]; then
 fi
 unset rc
 
+# Enable truecolor in Windows Terminal
+if [ -n "$WT_SESSION" ] && [ -z "$COLORTERM" ]; then
+  export COLORTERM=truecolor
+fi
+
 # Homebrew
 # Prioritize system binaries to prevent brew overriding things like dbus
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"

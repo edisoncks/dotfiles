@@ -81,11 +81,13 @@ echo "✅ Installed mise packages"
 if command -v npm >/dev/null 2>&1; then
 	for ext in "$DIR/.pi/agent/extensions/"*/; do
 		if [ -f "$ext/package.json" ] && [ -f "$ext/package-lock.json" ]; then
-			(cd "$ext" && npm ci --no-audit --no-fund) || echo "⚠️  npm ci failed in $ext (offline?) — run 'npm ci' there later"
+			echo "⌛ Installing npm deps in $ext..."
+			(cd "$ext" && npm ci --no-audit --no-fund)
 		fi
 	done
 else
-	echo "⚠️  npm not found — skipping pi extension installs (run 'npm ci' in .pi/agent/extensions/*/ later)"
+	echo "❌ npm not found — cannot install pi extension deps" >&2
+	exit 1
 fi
 
 # Reminder for the user's interactive shell only; the script itself is self-contained

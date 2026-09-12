@@ -77,6 +77,17 @@ echo "✅ Installed homebrew packages"
 mise install
 echo "✅ Installed mise packages"
 
+# Install npm deps for bundled pi extensions (lockfiles tracked, node_modules ignored)
+if command -v npm >/dev/null 2>&1; then
+	for ext in "$DIR/.pi/agent/extensions/"*/; do
+		if [ -f "$ext/package.json" ] && [ -f "$ext/package-lock.json" ]; then
+			(cd "$ext" && npm ci --no-audit --no-fund) || echo "⚠️  npm ci failed in $ext (offline?) — run 'npm ci' there later"
+		fi
+	done
+else
+	echo "⚠️  npm not found — skipping pi extension installs (run 'npm ci' in .pi/agent/extensions/*/ later)"
+fi
+
 # Reminder for the user's interactive shell only; the script itself is self-contained
 # (aliases, mise activate, etc. are loaded by sourcing ~/.bash_profile)
 echo "🚀 Done. Run 'source ~/.bash_profile' in this shell to pick up the new environment immediately (or just open a new terminal)."

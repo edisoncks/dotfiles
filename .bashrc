@@ -54,8 +54,13 @@ if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate bash)"
 fi
 
-# EDITOR
-export EDITOR="$HOMEBREW_PREFIX/bin/nvim"
+# EDITOR (resolve via PATH; fall back to vi on minimal systems)
+if command -v nvim >/dev/null 2>&1; then
+  EDITOR=nvim
+else
+  EDITOR=vi
+fi
+export EDITOR
 
 # OpenCode
 export OPENCODE_ENABLE_EXA=1

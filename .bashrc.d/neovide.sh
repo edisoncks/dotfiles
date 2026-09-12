@@ -1,1 +1,1 @@
-alias nv='screen -dmS neovide.$RANDOM$RANDOM neovide'
+alias nv='screen -dm neovide'

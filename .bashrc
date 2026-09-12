@@ -6,9 +6,14 @@ if [ -f /etc/bashrc ]; then
 fi
 
 # User specific environment
-if ! [[ "$PATH" =~ "$HOME/.local/bin:$HOME/bin:" ]]; then
-  PATH="$HOME/.local/bin:$HOME/bin:$PATH"
-fi
+case ":$PATH:" in
+  *":$HOME/bin:"*) ;;
+  *) PATH="$HOME/bin:$PATH" ;;
+esac
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) PATH="$HOME/.local/bin:$PATH" ;;
+esac
 export PATH
 
 # Uncomment the following line if you don't like systemctl's auto-paging feature:
@@ -32,9 +37,15 @@ fi
 # Homebrew
 # Prioritize system binaries to prevent brew overriding things like dbus
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
-if ! [[ "$PATH" =~ "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin" ]]; then
-  export PATH="$PATH:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin"
-fi
+case ":$PATH:" in
+  *":$HOMEBREW_PREFIX/bin:"*) ;;
+  *) PATH="$PATH:$HOMEBREW_PREFIX/bin" ;;
+esac
+case ":$PATH:" in
+  *":$HOMEBREW_PREFIX/sbin:"*) ;;
+  *) PATH="$PATH:$HOMEBREW_PREFIX/sbin" ;;
+esac
+export PATH
 export HOMEBREW_NO_ASK=1
 export HOMEBREW_NO_ANALYTICS=1
 

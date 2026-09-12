@@ -6,10 +6,13 @@ brew "bottom"
 brew "btop"
 brew "fastfetch"
 brew "fd"
+# Full variants required for yazi image/video previews:
+# https://yazi-rs.github.io/docs/installation/#homebrew
 brew "ffmpeg-full"
 brew "fzf"
 brew "gh"
 brew "git-delta"
+# Full variant required for yazi image previews, see URL above
 brew "imagemagick-full"
 brew "jq"
 brew "lazygit"

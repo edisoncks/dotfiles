@@ -70,6 +70,8 @@ done
 
 # Install homebrew packages
 brew bundle --file="$DIR/Brewfile"
+# -full variants required for yazi previews (see Brewfile); --overwrite needed
+# because Homebrew's default ffmpeg/imagemagick kegs conflict on link
 brew link ffmpeg-full imagemagick-full -f --overwrite
 echo "✅ Installed homebrew packages"
 

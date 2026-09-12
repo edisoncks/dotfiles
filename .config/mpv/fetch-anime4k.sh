@@ -29,6 +29,5 @@ else
 	exit 1
 fi
 
-count=$(find "$SHADER_DIR" -maxdepth 1 -name '*.glsl' | wc -l)
-count=$(echo "$count" | tr -d '[:space:]')
+count=$(find "$SHADER_DIR" -maxdepth 1 -name '*.glsl' | wc -l | tr -d '[:space:]')
 echo "✅ Installed $count Anime4K shaders into $SHADER_DIR"

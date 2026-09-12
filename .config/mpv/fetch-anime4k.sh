@@ -14,20 +14,21 @@ if [ "${1:-}" != "--force" ] && [ -f "$MARKER" ]; then
 fi
 
 mkdir -p "$SHADER_DIR"
-TMPDIR="$(mktemp -d)"
-trap 'rm -rf "$TMPDIR"' EXIT
+WORK_DIR="$(mktemp -d)"
+trap 'rm -rf "${WORK_DIR:?}"' EXIT
 
 echo "⌛ Downloading Anime4K $ANIME4K_VERSION..."
-curl -fsSL -o "$TMPDIR/Anime4K.zip" "$ANIME4K_URL"
+curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors -o "$WORK_DIR/Anime4K.zip" "$ANIME4K_URL"
 
 if command -v unzip >/dev/null 2>&1; then
-	unzip -o -q -j "$TMPDIR/Anime4K.zip" '*.glsl' -d "$SHADER_DIR"
+	unzip -o -q -j "$WORK_DIR/Anime4K.zip" '*.glsl' -d "$SHADER_DIR"
 elif command -v 7z >/dev/null 2>&1; then
-	7z x -y -o"$SHADER_DIR" "$TMPDIR/Anime4K.zip" '*.glsl' >/dev/null
+	7z x -y -o"$SHADER_DIR" "$WORK_DIR/Anime4K.zip" '*.glsl' >/dev/null
 else
 	echo "❌ Neither unzip nor 7z found (brew install sevenzip) — shaders not installed"
 	exit 1
 fi
 
 count=$(find "$SHADER_DIR" -maxdepth 1 -name '*.glsl' | wc -l)
+count=$(echo "$count" | tr -d '[:space:]')
 echo "✅ Installed $count Anime4K shaders into $SHADER_DIR"

@@ -1,3 +1,6 @@
+maximized = true
+vsync = true
+
 [font]
 normal = ["Mononoki Nerd Font", "Noto Color Emoji", "Noto Emoji"]
 size = 11.0

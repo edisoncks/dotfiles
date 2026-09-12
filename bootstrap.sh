@@ -11,9 +11,14 @@ fi
 
 # Ensure homebrew binary is in PATH (a fresh install isn't on this shell's PATH yet)
 HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
-if ! [[ "$PATH" =~ "$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin" ]]; then
-	export PATH="$PATH:$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin"
-fi
+case ":$PATH:" in
+	*":$HOMEBREW_PREFIX/bin:"*) ;;
+	*) export PATH="$PATH:$HOMEBREW_PREFIX/bin" ;;
+esac
+case ":$PATH:" in
+	*":$HOMEBREW_PREFIX/sbin:"*) ;;
+	*) export PATH="$PATH:$HOMEBREW_PREFIX/sbin" ;;
+esac
 export HOMEBREW_NO_ASK=1
 export HOMEBREW_NO_ANALYTICS=1
 

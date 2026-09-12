@@ -65,6 +65,9 @@ for i in "${DOTFILES[@]}"; do
 	echo "✅ Created symlinks for ~/$i"
 done
 
+# Fetch Anime4K shaders (ignored, not vendored)
+"$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
+
 # Install homebrew packages
 brew bundle --file="$DIR/Brewfile"
 brew link ffmpeg-full imagemagick-full -f --overwrite

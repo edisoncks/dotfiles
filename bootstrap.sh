@@ -31,7 +31,6 @@ fi
 DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 declare -a DOTFILES=(
 	".bashrc.d"
-	".config/environment.d/nvidia-prime.conf"
 	".config/ghostty"
 	".config/lazygit"
 	".config/mise"

@@ -30,11 +30,15 @@ function extractTask(text: string): string {
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("plan", {
     description: "Enter PLAN MODE (Plan → Revise → Review → Approve → Implementation)",
-    handler: async (args) => {
+    handler: async (args, ctx) => {
       // Strip leading whitespace (spaces, tabs, \r\n, \n)
       const task = (args || "").replace(/^\s+/, "");
       const message = PLAN_PROMPT + task;
-      pi.sendUserMessage(message);
+      // Command ctx has no streamingBehavior; default to followUp when busy
+      // (the input path below is preferred when streaming).
+      pi.sendUserMessage(message, {
+        deliverAs: ctx.isIdle() ? undefined : "followUp",
+      });
     },
   });
 
@@ -51,9 +55,11 @@ export default function (pi: ExtensionAPI) {
 
     const message = PLAN_PROMPT + task;
     if (event.images?.length) {
-      pi.sendUserMessage([{ type: "text", text: message }, ...event.images]);
+      pi.sendUserMessage([{ type: "text", text: message }, ...event.images], {
+        deliverAs: event.streamingBehavior,
+      });
     } else {
-      pi.sendUserMessage(message);
+      pi.sendUserMessage(message, { deliverAs: event.streamingBehavior });
     }
     return { action: "handled" };
   });

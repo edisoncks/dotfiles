@@ -168,6 +168,14 @@ function isDomainMatch(url: string, domains: string[]): boolean {
 }
 
 function getRequestSignal(signal: AbortSignal | undefined): AbortSignal {
+  if (
+    typeof AbortSignal.timeout !== "function" ||
+    typeof (AbortSignal as unknown as { any?: unknown }).any !== "function"
+  ) {
+    throw new Error(
+      "pi-web-search requires Node >=20.3 (AbortSignal.timeout/any missing)"
+    );
+  }
   const timeoutSignal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
 }

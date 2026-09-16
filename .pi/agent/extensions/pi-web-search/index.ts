@@ -167,15 +167,23 @@ function normalizeSearchParams(params: WebSearchParams): NormalizedSearchParams 
   };
 }
 
-function isDomainMatch(url: string, domains: string[]): boolean {
+export function hostnameOf(url: string): string | undefined {
   try {
-    const hostname = new URL(url).hostname.toLowerCase().replace(/\.$/u, "");
-    return domains.some(
-      (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
-    );
+    const noSlashes = url.replace(/^\/\//u, "");
+    const u = new URL(noSlashes.includes("://") ? noSlashes : `https://${noSlashes}`);
+    const hostname = u.hostname.toLowerCase().replace(/\.$/u, "");
+    return hostname || undefined;
   } catch {
-    return false;
+    return undefined;
   }
+}
+
+export function isDomainMatch(url: string, domains: string[]): boolean {
+  const hostname = hostnameOf(url);
+  if (!hostname) return false;
+  return domains.some(
+    (domain) => hostname === domain || hostname.endsWith(`.${domain}`),
+  );
 }
 
 function getRequestSignal(signal: AbortSignal | undefined): AbortSignal {

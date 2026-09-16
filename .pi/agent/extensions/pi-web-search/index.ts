@@ -89,13 +89,20 @@ interface ExaStructuredResult {
   snippet: string;
 }
 
-class DuckDuckGoUnavailableError extends Error {
+export class DuckDuckGoUnavailableError extends Error {
   constructor(
     message: string,
     readonly retryAt: number,
   ) {
     super(message);
     this.name = "DuckDuckGoUnavailableError";
+  }
+}
+
+export class DuckDuckGoDriftError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DuckDuckGoDriftError";
   }
 }
 
@@ -300,7 +307,7 @@ function createCircuitOpenError(state: DuckDuckGoState): DuckDuckGoUnavailableEr
   );
 }
 
-async function withDuckDuckGoRequestSlot<T>(
+export async function withDuckDuckGoRequestSlot<T>(
   state: DuckDuckGoState,
   signal: AbortSignal | undefined,
   operation: () => Promise<T>,
@@ -322,12 +329,13 @@ async function withDuckDuckGoRequestSlot<T>(
     await waitWithSignal(spacing, signal);
     throwIfAborted(signal);
 
-    try {
-      return await operation();
-    } finally {
-      state.nextRequestAt =
-        Date.now() + DDG_MIN_PAUSE_MS + randomJitter(DDG_JITTER_MS);
-    }
+    const result = await operation();
+    // Spacing penalty applies to completed attempts only. Deterministic
+    // failures (drift/challenge/abort) fail fast with no penalty; the
+    // circuit breaker owns cooldowns for rate-limit cases.
+    state.nextRequestAt =
+      Date.now() + DDG_MIN_PAUSE_MS + randomJitter(DDG_JITTER_MS);
+    return result;
   } finally {
     release();
   }
@@ -342,8 +350,11 @@ export function detectDuckDuckGoChallenge(html: string): string | undefined {
   return undefined;
 }
 
-function isRetryableDuckDuckGoError(error: unknown): boolean {
-  return !(error instanceof DuckDuckGoUnavailableError);
+export function isRetryableDuckDuckGoError(error: unknown): boolean {
+  if (error instanceof DuckDuckGoUnavailableError) return false;
+  if (error instanceof DuckDuckGoDriftError) return false;
+  if (error instanceof DOMException && error.name === "AbortError") return false;
+  return true;
 }
 
 function getDuckDuckGoCacheKey(params: NormalizedSearchParams): string {
@@ -879,7 +890,9 @@ async function fetchDuckDuckGoAttempt(
     throw new DuckDuckGoUnavailableError(classification.reason, retryAt);
   }
   if (classification.kind === "drift") {
-    throw new Error(
+    // Deterministic: same markup will fail identically on retry. Fail fast
+    // with no cooldown (this is not rate-limiting) and no retry.
+    throw new DuckDuckGoDriftError(
       "DuckDuckGo returned results but none could be parsed; its markup likely changed. Use web_search_exa for this search.",
     );
   }

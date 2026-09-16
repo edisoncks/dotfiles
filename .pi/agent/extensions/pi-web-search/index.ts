@@ -103,7 +103,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function createDuckDuckGoState(): DuckDuckGoState {
+export function createDuckDuckGoState(): DuckDuckGoState {
   return {
     requestQueue: Promise.resolve(),
     nextRequestAt: 0,
@@ -241,7 +241,7 @@ function waitWithSignal(ms: number, signal: AbortSignal | undefined): Promise<vo
   });
 }
 
-function waitForPromiseWithSignal<T>(
+export function waitForPromiseWithSignal<T>(
   promise: Promise<T>,
   signal: AbortSignal | undefined,
 ): Promise<T> {
@@ -932,15 +932,18 @@ async function searchDuckDuckGo(
   const pending = state.inFlight.get(key);
   if (pending) return waitForPromiseWithSignal(pending, signal);
 
-  const request = fetchDuckDuckGoWithRetry(params, state, signal);
+  // Shared work must not be tied to any single waiter's signal: the first
+  // caller's abort must not reject co-waiters. Each waiter (including the
+  // creator) applies its own signal only on the wait below.
+  const request = fetchDuckDuckGoWithRetry(params, state, undefined);
   state.inFlight.set(key, request);
 
   try {
-    const result = await request;
+    const result = await waitForPromiseWithSignal(request, signal);
     cacheDuckDuckGoResult(state, key, result);
     return result;
   } finally {
-    state.inFlight.delete(key);
+    if (state.inFlight.get(key) === request) state.inFlight.delete(key);
   }
 }
 

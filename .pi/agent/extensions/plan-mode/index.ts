@@ -19,6 +19,14 @@ const PLAN_PROMPT = `Enter PLAN MODE (Plan → Revise → Review → Approve →
 
 `;
 
+function isPlanInvocation(text: string): boolean {
+  return /^\/plan(\s|$)/.test(text);
+}
+
+function extractTask(text: string): string {
+  return text.slice("/plan".length).replace(/^\s+/, "");
+}
+
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("plan", {
     description: "Enter PLAN MODE (Plan → Revise → Review → Approve → Implementation)",
@@ -36,13 +44,10 @@ export default function (pi: ExtensionAPI) {
   // Intercept /plan via input event for full newline preservation
   pi.on("input", async (event) => {
     if (event.source === "extension") return { action: "continue" };
-    if (!event.text.startsWith("/plan")) return { action: "continue" };
+    if (!isPlanInvocation(event.text)) return { action: "continue" };
 
     // Extract raw arguments after /plan
-    const args = event.text.slice("/plan".length);
-
-    // Strip leading whitespace (spaces, tabs, \r\n, \n)
-    const task = args.replace(/^\s+/, "");
+    const task = extractTask(event.text);
 
     const message = PLAN_PROMPT + task;
     pi.sendUserMessage(message);

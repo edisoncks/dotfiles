@@ -39,50 +39,15 @@ export type {
 
 const execFileAsync = promisify(execFile);
 
-const DDG_MIN_PAUSE_MS = 3_000;
-const DDG_JITTER_MS = 1_000;
 const DDG_MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
 const OBSCURA_COMMAND = "obscura";
-const DDG_CACHE_TTL_MS = 10 * 60_000;
-const DDG_CACHE_MAX_ENTRIES = 64;
-const DDG_COOLDOWN_MS = 10 * 60_000;
-const DDG_MAX_COOLDOWN_MS = 15 * 60_000;
 const DDG_MAX_RETRIES = 1;
 const DDG_RETRY_BASE_MS = 1_000;
 const DUCKDUCKGO_URL = "https://lite.duckduckgo.com/lite";
 const EXA_MCP_URL = "https://mcp.exa.ai/mcp";
 
-export class DuckDuckGoUnavailableError extends Error {
-  constructor(
-    message: string,
-    readonly retryAt: number,
-  ) {
-    super(message);
-    this.name = "DuckDuckGoUnavailableError";
-  }
-}
-
-export class DuckDuckGoDriftError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DuckDuckGoDriftError";
-  }
-}
-
-export function createDuckDuckGoState(): DuckDuckGoState {
-  return {
-    requestQueue: Promise.resolve(),
-    nextRequestAt: 0,
-    unavailableUntil: 0,
-    cache: new Map(),
-    inFlight: new Map(),
-  };
-}
-
 import {
-  normalizeDomain,
   normalizeDomains,
-  hostnameOf,
   isDomainMatch,
 } from "./lib/filter.js";
 
@@ -92,6 +57,56 @@ export {
   hostnameOf,
   isDomainMatch,
 } from "./lib/filter.js";
+
+import {
+  getRequestSignal,
+  errorMessage,
+  shortErrorMessage,
+  throwIfAborted,
+  waitWithSignal,
+  waitForPromiseWithSignal,
+  randomJitter,
+  DDG_JITTER_MS,
+  clampCooldown,
+  markDuckDuckGoUnavailable,
+  createCircuitOpenError,
+  withDuckDuckGoRequestSlot,
+  isRetryableDuckDuckGoError,
+  getDuckDuckGoCacheKey,
+  getCachedDuckDuckGoResult,
+  cacheDuckDuckGoResult,
+  formatNumberedResults,
+  truncateSearchOutput,
+  formatSearchToolResult,
+  createDuckDuckGoState,
+  DuckDuckGoUnavailableError,
+  DuckDuckGoDriftError,
+} from "./lib/policy.js";
+
+export {
+  getRequestSignal,
+  errorMessage,
+  shortErrorMessage,
+  throwIfAborted,
+  waitWithSignal,
+  waitForPromiseWithSignal,
+  randomJitter,
+  DDG_JITTER_MS,
+  clampCooldown,
+  markDuckDuckGoUnavailable,
+  createCircuitOpenError,
+  withDuckDuckGoRequestSlot,
+  isRetryableDuckDuckGoError,
+  getDuckDuckGoCacheKey,
+  getCachedDuckDuckGoResult,
+  cacheDuckDuckGoResult,
+  formatNumberedResults,
+  truncateSearchOutput,
+  formatSearchToolResult,
+  createDuckDuckGoState,
+  DuckDuckGoUnavailableError,
+  DuckDuckGoDriftError,
+} from "./lib/policy.js";
 
 function normalizeSearchParams(params: WebSearchParams): NormalizedSearchParams {
   const query = params.query.trim();
@@ -110,28 +125,6 @@ function normalizeSearchParams(params: WebSearchParams): NormalizedSearchParams 
     blockedDomains: normalizeDomains(params.blocked_domains),
     numResults,
   };
-}
-
-function getRequestSignal(signal: AbortSignal | undefined): AbortSignal {
-  if (
-    typeof AbortSignal.timeout !== "function" ||
-    typeof (AbortSignal as unknown as { any?: unknown }).any !== "function"
-  ) {
-    throw new Error(
-      "pi-web-search requires Node >=20.3 (AbortSignal.timeout/any missing)"
-    );
-  }
-  const timeoutSignal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
-  return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
-}
-
-function errorMessage(error: unknown): string {
-  if (error instanceof Error && error.message) return error.message;
-  return String(error);
-}
-
-function shortErrorMessage(error: unknown): string {
-  return errorMessage(error).replace(/\s+/gu, " ").slice(0, 300);
 }
 
 function isExaQuotaOrRateLimitError(error: unknown): boolean {
@@ -168,125 +161,6 @@ export function createDuckDuckGoSearchError(error: unknown): Error {
   );
 }
 
-function throwIfAborted(signal: AbortSignal | undefined): void {
-  if (!signal?.aborted) return;
-  throw signal.reason ?? new DOMException("The operation was aborted", "AbortError");
-}
-
-function waitWithSignal(ms: number, signal: AbortSignal | undefined): Promise<void> {
-  throwIfAborted(signal);
-  if (ms <= 0) return Promise.resolve();
-
-  return new Promise<void>((resolve, reject) => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    const cleanup = () => {
-      if (timer !== undefined) clearTimeout(timer);
-      signal?.removeEventListener("abort", onAbort);
-    };
-    const onAbort = () => {
-      cleanup();
-      reject(signal?.reason ?? new DOMException("The operation was aborted", "AbortError"));
-    };
-
-    timer = setTimeout(() => {
-      cleanup();
-      resolve();
-    }, ms);
-    signal?.addEventListener("abort", onAbort, { once: true });
-    if (signal?.aborted) onAbort();
-  });
-}
-
-export function waitForPromiseWithSignal<T>(
-  promise: Promise<T>,
-  signal: AbortSignal | undefined,
-): Promise<T> {
-  throwIfAborted(signal);
-  if (!signal) return promise;
-
-  return new Promise<T>((resolve, reject) => {
-    const onAbort = () => {
-      cleanup();
-      reject(signal.reason ?? new DOMException("The operation was aborted", "AbortError"));
-    };
-    const cleanup = () => signal.removeEventListener("abort", onAbort);
-
-    signal.addEventListener("abort", onAbort, { once: true });
-    if (signal.aborted) onAbort();
-    promise.then(
-      (value) => {
-        cleanup();
-        resolve(value);
-      },
-      (error: unknown) => {
-        cleanup();
-        reject(error);
-      },
-    );
-  });
-}
-
-function randomJitter(maxMs: number): number {
-  return Math.floor(Math.random() * (maxMs + 1));
-}
-
-function clampCooldown(delayMs: number): number {
-  return Math.min(Math.max(delayMs, DDG_COOLDOWN_MS), DDG_MAX_COOLDOWN_MS);
-}
-
-function markDuckDuckGoUnavailable(
-  state: DuckDuckGoState,
-  delayMs = DDG_COOLDOWN_MS,
-): number {
-  const retryAt = Date.now() + clampCooldown(delayMs);
-  state.unavailableUntil = Math.max(state.unavailableUntil, retryAt);
-  return state.unavailableUntil;
-}
-
-function createCircuitOpenError(state: DuckDuckGoState): DuckDuckGoUnavailableError {
-  const retryAt = state.unavailableUntil;
-  const seconds = Math.max(1, Math.ceil((retryAt - Date.now()) / 1_000));
-  return new DuckDuckGoUnavailableError(
-    `DuckDuckGo is temporarily unavailable; retry in about ${seconds}s`,
-    retryAt,
-  );
-}
-
-export async function withDuckDuckGoRequestSlot<T>(
-  state: DuckDuckGoState,
-  signal: AbortSignal | undefined,
-  operation: () => Promise<T>,
-): Promise<T> {
-  const previous = state.requestQueue;
-  let release!: () => void;
-  state.requestQueue = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-
-  try {
-    await waitForPromiseWithSignal(previous, signal);
-    throwIfAborted(signal);
-    if (state.unavailableUntil > Date.now()) {
-      throw createCircuitOpenError(state);
-    }
-
-    const spacing = Math.max(0, state.nextRequestAt - Date.now());
-    await waitWithSignal(spacing, signal);
-    throwIfAborted(signal);
-
-    const result = await operation();
-    // Spacing penalty applies to completed attempts only. Deterministic
-    // failures (drift/challenge/abort) fail fast with no penalty; the
-    // circuit breaker owns cooldowns for rate-limit cases.
-    state.nextRequestAt =
-      Date.now() + DDG_MIN_PAUSE_MS + randomJitter(DDG_JITTER_MS);
-    return result;
-  } finally {
-    release();
-  }
-}
-
 export function detectDuckDuckGoChallenge(html: string): string | undefined {
   // Structural markers only. Callers gate this on zero parsed results so that
   // snippet text (e.g. a search about "HTTP 429") can never trip the breaker.
@@ -294,58 +168,6 @@ export function detectDuckDuckGoChallenge(html: string): string | undefined {
     return "DuckDuckGo returned an anti-bot challenge page";
   }
   return undefined;
-}
-
-export function isRetryableDuckDuckGoError(error: unknown): boolean {
-  if (error instanceof DuckDuckGoUnavailableError) return false;
-  if (error instanceof DuckDuckGoDriftError) return false;
-  if (error instanceof DOMException && error.name === "AbortError") return false;
-  return true;
-}
-
-function getDuckDuckGoCacheKey(params: NormalizedSearchParams): string {
-  return JSON.stringify({
-    query: params.query,
-    allowedDomains: params.allowedDomains,
-    blockedDomains: params.blockedDomains,
-    numResults: params.numResults,
-  });
-}
-
-function getCachedDuckDuckGoResult(
-  state: DuckDuckGoState,
-  key: string,
-): ProviderSearchResult | undefined {
-  const entry = state.cache.get(key);
-  if (!entry) return undefined;
-  if (entry.expiresAt <= Date.now()) {
-    state.cache.delete(key);
-    return undefined;
-  }
-  return entry.result;
-}
-
-function cacheDuckDuckGoResult(
-  state: DuckDuckGoState,
-  key: string,
-  result: ProviderSearchResult,
-): void {
-  const now = Date.now();
-  for (const [entryKey, entry] of state.cache) {
-    if (entry.expiresAt <= now) state.cache.delete(entryKey);
-  }
-
-  state.cache.delete(key);
-  state.cache.set(key, {
-    result,
-    expiresAt: now + DDG_CACHE_TTL_MS,
-  });
-
-  while (state.cache.size > DDG_CACHE_MAX_ENTRIES) {
-    const oldestKey = state.cache.keys().next().value as string | undefined;
-    if (oldestKey === undefined) break;
-    state.cache.delete(oldestKey);
-  }
 }
 
 export function parseSsePayload(body: string): unknown {
@@ -519,18 +341,6 @@ function parseExaStructuredResults(rawText: string): ExaStructuredResult[] | und
       },
     ];
   });
-}
-
-function formatNumberedResults(provider: string, results: WebSearchResult[]): string {
-  if (results.length === 0) return `No web search results found (provider: ${provider}).`;
-
-  const entries = results.map((result, index) => {
-    const lines = [`${index + 1}. ${result.title}`, `   URL: ${result.url}`];
-    if (result.snippet) lines.push(`   ${result.snippet}`);
-    return lines.join("\n");
-  });
-
-  return [`Web search results (provider: ${provider}):`, ...entries].join("\n\n");
 }
 
 export function formatExaSearchResult(
@@ -931,17 +741,6 @@ async function searchDuckDuckGoForTool(
   }
 }
 
-function truncateSearchOutput(text: string): string {
-  const truncation = truncateHead(text, {
-    maxBytes: DEFAULT_MAX_BYTES,
-    maxLines: DEFAULT_MAX_LINES,
-  });
-
-  if (!truncation.truncated) return truncation.content;
-
-  return `${truncation.content}\n\n[Search output truncated by pi; reduce numResults or narrow the domain filters.]`;
-}
-
 function createSearchParameters() {
   return Type.Object({
     query: Type.String({
@@ -967,19 +766,6 @@ function createSearchParameters() {
       }),
     ),
   });
-}
-
-function formatSearchToolResult(
-  provider: string,
-  result: ProviderSearchResult,
-): { content: [{ type: "text"; text: string }]; details: { provider: string; resultCount: number } } {
-  return {
-    content: [{ type: "text", text: truncateSearchOutput(result.text) }],
-    details: {
-      provider,
-      resultCount: result.resultCount,
-    },
-  };
 }
 
 export default function (pi: ExtensionAPI) {

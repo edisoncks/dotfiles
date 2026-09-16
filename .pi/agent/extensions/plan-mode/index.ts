@@ -4,11 +4,24 @@
  * Registers /plan to enter PLAN MODE with proper newline preservation.
  * Replaces .pi/agent/prompts/plan.md to fix the $ARGUMENTS newline issue.
  *
+ * Activation contract: plan mode is entered only when the input starts with
+ * /plan. Anything before it (e.g. a pasted image path) is left untouched and
+ * the message is sent to the model as-is.
+ *
  * Usage:
  *   /plan Fix the login bug
  *   /plan
  *     Fix the login bug
  *     Also make sure to add tests
+ *
+ * Known limitations:
+ * - pi -p / --mode json: sendUserMessage() is fire-and-forget and print mode
+ *   disposes the session as soon as prompt() returns, so /plan is dropped.
+ * - Queued input (steer/followUp, e.g. messages queued during compaction)
+ *   does not emit the input event, so /plan\n... reaches the model raw.
+ * - The command path cannot receive attached images, so RPC prompts that
+ *   attach images to single-line "/plan ..." lose them; the input path
+ *   forwards them.
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";

@@ -7,13 +7,38 @@ import {
 import { Type } from "typebox";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
+import {
+  DEFAULT_NUM_RESULTS,
+  MAX_NUM_RESULTS,
+  MIN_QUERY_LENGTH,
+  REQUEST_TIMEOUT_MS,
+  isRecord,
+  type DuckDuckGoCacheEntry,
+  type DuckDuckGoState,
+  type ExaStructuredResult,
+  type McpRpcResponse,
+  type McpToolResult,
+  type NormalizedSearchParams,
+  type ProviderSearchResult,
+  type WebSearchParams,
+  type WebSearchResult,
+  type DuckDuckGoClassification,
+} from "./lib/types.js";
+
+export type {
+  DuckDuckGoCacheEntry,
+  DuckDuckGoState,
+  ExaStructuredResult,
+  McpRpcResponse,
+  McpToolResult,
+  NormalizedSearchParams,
+  ProviderSearchResult,
+  WebSearchParams,
+  WebSearchResult,
+} from "./lib/types.js";
 
 const execFileAsync = promisify(execFile);
 
-const DEFAULT_NUM_RESULTS = 8;
-const MAX_NUM_RESULTS = 20;
-const MIN_QUERY_LENGTH = 2;
-const REQUEST_TIMEOUT_MS = 15_000;
 const DDG_MIN_PAUSE_MS = 3_000;
 const DDG_JITTER_MS = 1_000;
 const DDG_MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
@@ -26,68 +51,6 @@ const DDG_MAX_RETRIES = 1;
 const DDG_RETRY_BASE_MS = 1_000;
 const DUCKDUCKGO_URL = "https://lite.duckduckgo.com/lite";
 const EXA_MCP_URL = "https://mcp.exa.ai/mcp";
-
-export interface WebSearchResult {
-  title: string;
-  url: string;
-  snippet: string;
-}
-
-interface WebSearchParams {
-  query: string;
-  allowed_domains?: string[];
-  blocked_domains?: string[];
-  numResults?: number;
-}
-
-export interface NormalizedSearchParams {
-  query: string;
-  allowedDomains: string[];
-  blockedDomains: string[];
-  numResults: number;
-}
-
-interface ProviderSearchResult {
-  text: string;
-  resultCount: number;
-}
-
-interface DuckDuckGoCacheEntry {
-  result: ProviderSearchResult;
-  expiresAt: number;
-}
-
-interface DuckDuckGoState {
-  requestQueue: Promise<void>;
-  nextRequestAt: number;
-  unavailableUntil: number;
-  cache: Map<string, DuckDuckGoCacheEntry>;
-  inFlight: Map<string, Promise<ProviderSearchResult>>;
-}
-
-interface McpRpcResponse {
-  result?: McpToolResult;
-  error?: {
-    code?: number;
-    message?: string;
-    data?: unknown;
-  };
-}
-
-export interface McpToolResult {
-  content?: Array<{
-    type?: string;
-    text?: string;
-  }>;
-  isError?: boolean;
-  structuredContent?: unknown;
-}
-
-interface ExaStructuredResult {
-  title: string;
-  url: string;
-  snippet: string;
-}
 
 export class DuckDuckGoUnavailableError extends Error {
   constructor(
@@ -104,10 +67,6 @@ export class DuckDuckGoDriftError extends Error {
     super(message);
     this.name = "DuckDuckGoDriftError";
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }
 
 export function createDuckDuckGoState(): DuckDuckGoState {
@@ -845,12 +804,6 @@ export function parseDuckDuckGoResults(
 
   return results;
 }
-
-export type DuckDuckGoClassification =
-  | { kind: "results"; results: WebSearchResult[] }
-  | { kind: "challenge"; reason: string }
-  | { kind: "drift" }
-  | { kind: "empty" };
 
 export function classifyDuckDuckGoResponse(
   html: string,

@@ -47,8 +47,8 @@ export default function (pi: ExtensionAPI) {
       // Strip leading whitespace (spaces, tabs, \r\n, \n)
       const task = (args || "").replace(/^\s+/, "");
       const message = PLAN_PROMPT + task;
-      // Command ctx has no streamingBehavior; default to followUp when busy
-      // (the input path below is preferred when streaming).
+      // Command handlers get no streamingBehavior. When the agent is busy,
+      // queue as followUp (a requested "steer" cannot be honored here).
       pi.sendUserMessage(message, {
         deliverAs: ctx.isIdle() ? undefined : "followUp",
       });

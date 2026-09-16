@@ -50,7 +50,11 @@ export default function (pi: ExtensionAPI) {
     const task = extractTask(event.text);
 
     const message = PLAN_PROMPT + task;
-    pi.sendUserMessage(message);
+    if (event.images?.length) {
+      pi.sendUserMessage([{ type: "text", text: message }, ...event.images]);
+    } else {
+      pi.sendUserMessage(message);
+    }
     return { action: "handled" };
   });
 }

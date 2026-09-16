@@ -1,31 +1,22 @@
-import {
-  DEFAULT_MAX_BYTES,
-  DEFAULT_MAX_LINES,
-  truncateHead,
-  type ExtensionAPI,
-} from "@earendil-works/pi-coding-agent";
+import { type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import {
   DEFAULT_NUM_RESULTS,
   MAX_NUM_RESULTS,
   MIN_QUERY_LENGTH,
-  REQUEST_TIMEOUT_MS,
-  isRecord,
-  type DuckDuckGoCacheEntry,
-  type DuckDuckGoState,
-  type ExaStructuredResult,
-  type McpRpcResponse,
-  type McpToolResult,
   type NormalizedSearchParams,
-  type ProviderSearchResult,
   type WebSearchParams,
-  type WebSearchResult,
-  type DuckDuckGoClassification,
 } from "./lib/types.js";
+import { normalizeDomains } from "./lib/filter.js";
+import { createDuckDuckGoState, formatSearchToolResult } from "./lib/policy.js";
+import { searchExaForTool } from "./lib/exa.js";
+import { searchDuckDuckGoForTool } from "./lib/duckduckgo.js";
 
+// Re-exported for tests and external importers; implementations live in lib/.
 export type {
   DuckDuckGoCacheEntry,
   DuckDuckGoState,
+  DuckDuckGoClassification,
   ExaStructuredResult,
   McpRpcResponse,
   McpToolResult,
@@ -35,12 +26,6 @@ export type {
   WebSearchResult,
 } from "./lib/types.js";
 
-
-import {
-  normalizeDomains,
-  isDomainMatch,
-} from "./lib/filter.js";
-
 export {
   normalizeDomain,
   normalizeDomains,
@@ -48,7 +33,7 @@ export {
   isDomainMatch,
 } from "./lib/filter.js";
 
-import {
+export {
   getRequestSignal,
   errorMessage,
   shortErrorMessage,
@@ -72,8 +57,6 @@ import {
   DuckDuckGoUnavailableError,
   DuckDuckGoDriftError,
 } from "./lib/policy.js";
-
-import { searchExaForTool } from "./lib/exa.js";
 
 export {
   isExaQuotaOrRateLimitError,
@@ -89,8 +72,6 @@ export {
   searchExaForTool,
 } from "./lib/exa.js";
 
-import { searchDuckDuckGoForTool } from "./lib/duckduckgo.js";
-
 export {
   decodeHtmlEntities,
   stripHtml,
@@ -105,31 +86,6 @@ export {
   searchDuckDuckGoForTool,
   createDuckDuckGoSearchError,
 } from "./lib/duckduckgo.js";
-
-export {
-  getRequestSignal,
-  errorMessage,
-  shortErrorMessage,
-  throwIfAborted,
-  waitWithSignal,
-  waitForPromiseWithSignal,
-  randomJitter,
-  DDG_JITTER_MS,
-  clampCooldown,
-  markDuckDuckGoUnavailable,
-  createCircuitOpenError,
-  withDuckDuckGoRequestSlot,
-  isRetryableDuckDuckGoError,
-  getDuckDuckGoCacheKey,
-  getCachedDuckDuckGoResult,
-  cacheDuckDuckGoResult,
-  formatNumberedResults,
-  truncateSearchOutput,
-  formatSearchToolResult,
-  createDuckDuckGoState,
-  DuckDuckGoUnavailableError,
-  DuckDuckGoDriftError,
-} from "./lib/policy.js";
 
 function normalizeSearchParams(params: WebSearchParams): NormalizedSearchParams {
   const query = params.query.trim();

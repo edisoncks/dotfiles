@@ -56,10 +56,15 @@ export default function (pi: ExtensionAPI) {
   });
 
   // Intercept /plan via input event for multi-line: /plan\nFix this.
-  // The command parser splits on literal " " only (agent-session.js),
-  // so /plan followed by newline/tab misses dispatch and lands here.
-  // Extension commands run before the input event, so single-line
-  // "/plan foo" never reaches this handler when idle.
+  // Two dispatch paths, by design:
+  // - "/plan foo" dispatches as the registered command; pi runs extension
+  //   commands before the input event, so this handler is never reached.
+  // - "/plan" followed by newline/tab misses command dispatch because the
+  //   parser derives the command name with text.indexOf(" ")
+  //   (_tryExecuteExtensionCommand in agent-session.js). It falls through to
+  //   this handler, which forwards the task verbatim, newlines included.
+  // Activation requires the input to start with "/plan" (isPlanInvocation);
+  // text before it is ignored by design, not prepended or rewritten.
   pi.on("input", async (event) => {
     if (event.source === "extension") return { action: "continue" };
     if (!isPlanInvocation(event.text)) return { action: "continue" };

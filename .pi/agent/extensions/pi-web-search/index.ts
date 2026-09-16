@@ -763,13 +763,25 @@ function stripHtml(value: string): string {
     .trim();
 }
 
-function resolveDuckDuckGoResultUrl(href: string): string | undefined {
+export function resolveDuckDuckGoResultUrl(href: string): string | undefined {
   try {
     const link = new URL(decodeHtmlEntities(href), "https://duckduckgo.com");
-    const destination = link.searchParams.get("uddg");
-    const resultUrl = destination ? new URL(destination) : link;
-    if (resultUrl.protocol !== "http:" && resultUrl.protocol !== "https:") return undefined;
-    return resultUrl.toString();
+    const dest = link.searchParams.get("uddg");
+    if (!dest) {
+      // Never surface duckduckgo.com navigation links as results.
+      if (link.hostname.toLowerCase().endsWith("duckduckgo.com")) return undefined;
+      if (link.protocol !== "http:" && link.protocol !== "https:") return undefined;
+      return link.toString();
+    }
+    let target: URL;
+    try {
+      target = new URL(dest, "https://duckduckgo.com");
+    } catch {
+      return undefined;
+    }
+    if (target.protocol !== "http:" && target.protocol !== "https:") return undefined;
+    if (target.hostname.toLowerCase().endsWith("duckduckgo.com")) return undefined;
+    return target.toString();
   } catch {
     return undefined;
   }

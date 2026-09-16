@@ -387,7 +387,7 @@ function cacheDuckDuckGoResult(
   }
 }
 
-function parseSsePayload(body: string): unknown {
+export function parseSsePayload(body: string): unknown {
   const blocks = body.split(/\r?\n\r?\n/u);
   const candidates: string[] = [];
 
@@ -413,11 +413,40 @@ function parseSsePayload(body: string): unknown {
   throw new Error("Exa MCP returned an invalid SSE response");
 }
 
-function parseMcpResponse(body: string): McpRpcResponse {
+export function parseMcpResponse(body: string, contentType: string | null = null): McpRpcResponse {
   const trimmed = body.trim();
   if (!trimmed) return {};
 
-  const payload = trimmed.includes("data:") ? parseSsePayload(trimmed) : JSON.parse(trimmed);
+  const looksSSE =
+    /text\/event-stream/iu.test(contentType ?? "") ||
+    /^(event|data):/mu.test(trimmed);
+
+  let payload: unknown;
+  if (!looksSSE) {
+    try {
+      payload = JSON.parse(trimmed) as unknown;
+    } catch (jsonError) {
+      try {
+        payload = parseSsePayload(trimmed);
+      } catch {
+        throw new Error(
+          `Exa MCP response parsed neither as JSON (as JSON: ${shortErrorMessage(jsonError)}) nor as SSE fallback`
+        );
+      }
+    }
+  } else {
+    try {
+      payload = parseSsePayload(trimmed);
+    } catch (sseError) {
+      try {
+        payload = JSON.parse(trimmed) as unknown;
+      } catch {
+        throw new Error(
+          `Exa MCP response parsed neither as SSE (as SSE: ${shortErrorMessage(sseError)}) nor as JSON fallback`
+        );
+      }
+    }
+  }
   if (!isRecord(payload)) {
     throw new Error("Exa MCP returned an invalid JSON-RPC response");
   }
@@ -456,7 +485,7 @@ async function postMcpRequest(
   }
 
   return {
-    response: parseMcpResponse(body),
+    response: parseMcpResponse(body, response.headers.get("content-type")),
     sessionId: response.headers.get("mcp-session-id") ?? sessionId,
   };
 }

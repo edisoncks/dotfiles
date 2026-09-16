@@ -40,7 +40,7 @@ interface WebSearchParams {
   numResults?: number;
 }
 
-interface NormalizedSearchParams {
+export interface NormalizedSearchParams {
   query: string;
   allowedDomains: string[];
   blockedDomains: string[];
@@ -74,7 +74,7 @@ interface McpRpcResponse {
   };
 }
 
-interface McpToolResult {
+export interface McpToolResult {
   content?: Array<{
     type?: string;
     text?: string;
@@ -214,8 +214,15 @@ function isExaQuotaOrRateLimitError(error: unknown): boolean {
   );
 }
 
-function createExaSearchError(error: unknown): Error {
+export function createExaSearchError(error: unknown): Error {
   const detail = shortErrorMessage(error);
+  // Warn-and-try per design: anonymous use may work, so only hint at the
+  // key when the server actually rejected auth.
+  if (/http\s*40[13]/iu.test(detail)) {
+    return new Error(
+      `Exa web search is unavailable (${detail}). Set EXA_API_KEY to use Exa, or call web_search_ddg for this search instead; do not retry web_search_exa immediately.`
+    );
+  }
   const reason = isExaQuotaOrRateLimitError(error)
     ? "Exa quota or rate limit was reached"
     : "Exa web search is unavailable";
@@ -224,7 +231,12 @@ function createExaSearchError(error: unknown): Error {
   );
 }
 
-function createDuckDuckGoSearchError(error: unknown): Error {
+export function createDuckDuckGoSearchError(error: unknown): Error {
+  if (/spawn obscura ENOENT|ENOENT.*obscura|obscura.*not found/iu.test(errorMessage(error))) {
+    return new Error(
+      `obscura not found on PATH (required for web_search_ddg); install obscura or use web_search_exa instead. (${shortErrorMessage(error)})`
+    );
+  }
   return new Error(
     `DuckDuckGo web search is unavailable (${shortErrorMessage(error)}). Use web_search_exa if it has not already failed; do not retry DuckDuckGo immediately.`,
   );
@@ -595,7 +607,7 @@ function formatNumberedResults(provider: string, results: WebSearchResult[]): st
   return [`Web search results (provider: ${provider}):`, ...entries].join("\n\n");
 }
 
-function formatExaSearchResult(
+export function formatExaSearchResult(
   toolResult: McpToolResult,
   params: NormalizedSearchParams,
 ): ProviderSearchResult {
@@ -621,12 +633,14 @@ function formatExaSearchResult(
     };
   }
 
-  const resultCount = (rawText.match(/^Title:/gimu) ?? []).length;
+  // Unstructured text cannot be counted reliably; report 0 rather than
+  // guessing from body content (a snippet line starting with "Title:"
+  // would inflate a /^Title:/ heuristic).
   return {
     text: rawText
       ? `Web search results (provider: Exa):\n\n${rawText}`
       : "No web search results found (provider: Exa).",
-    resultCount,
+    resultCount: 0,
   };
 }
 

@@ -113,7 +113,7 @@ export function createDuckDuckGoState(): DuckDuckGoState {
   };
 }
 
-function normalizeDomain(domain: string): string {
+export function normalizeDomain(domain: string): string {
   const value = domain.trim();
   if (!value) return "";
 
@@ -127,12 +127,16 @@ function normalizeDomain(domain: string): string {
   }
 }
 
-function normalizeDomains(domains: string[] | undefined): string[] {
+export function normalizeDomains(domains: string[] | undefined): string[] {
+  const input = domains ?? [];
+  for (const raw of input) {
+    if (raw.trim().length === 0) {
+      throw new Error(`Invalid domain: ${raw}`);
+    }
+  }
   return [
     ...new Set(
-      (domains ?? [])
-        .map((domain) => normalizeDomain(domain))
-        .filter((domain) => domain.length > 0),
+      input.map((domain) => normalizeDomain(domain)).filter((domain) => domain.length > 0),
     ),
   ];
 }

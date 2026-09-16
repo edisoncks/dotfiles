@@ -42,10 +42,11 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // Intercept /plan via input event for multi-line: /plan\nFix this
-  // (command handler doesn't fire when input contains newline after /plan)
-
-  // Intercept /plan via input event for full newline preservation
+  // Intercept /plan via input event for multi-line: /plan\nFix this.
+  // The command parser splits on literal " " only (agent-session.js),
+  // so /plan followed by newline/tab misses dispatch and lands here.
+  // Extension commands run before the input event, so single-line
+  // "/plan foo" never reaches this handler when idle.
   pi.on("input", async (event) => {
     if (event.source === "extension") return { action: "continue" };
     if (!isPlanInvocation(event.text)) return { action: "continue" };

@@ -241,8 +241,12 @@ export default function (pi: ExtensionAPI) {
 	// Never rejects: all failures fall through to bell(), which is safe.
 	function beep(opts?: { force?: boolean }): Promise<void> {
 		const now = performance.now();
-		if (!opts?.force && now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
-		lastBeep = now;
+		if (!opts?.force) {
+			if (now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
+			lastBeep = now;
+		}
+		// force: bypass debounce entirely and don't touch lastBeep,
+		// so /notify-beep test never eats the next real notification.
 		return (async () => {
 			try {
 				const file = soundFile();

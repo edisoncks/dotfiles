@@ -87,7 +87,7 @@ const PLAYERS: Player[] = [
 	{ cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] },
 ];
 
-function playWith(player: Player, file: string): Promise<boolean> {
+function playWith(player: Player, file: string): Promise<PlayResult> {
 	return playCmd(
 		player.cmd,
 		player.args.map((a) => (a === "{file}" ? file : a)),
@@ -115,29 +115,32 @@ function bell(): void {
 
 const PLAY_TIMEOUT_MS = 2000;
 
-// Runs cmd. Resolves true when playback succeeds (exit 0).
+type PlayResult = "ok" | "fail" | "timeout";
+
+// Runs cmd. ok = clean exit 0, fail = spawn error / non-zero exit,
+// timeout = SIGKILLed after 2s (assume 2s audible was heard).
 // A missing server (e.g. pw-play with PipeWire down) surfaces as a
 // non-zero exit, not a spawn error, so watch close codes, not just errors.
-function playCmd(cmd: string, args: string[]): Promise<boolean> {
+function playCmd(cmd: string, args: string[]): Promise<PlayResult> {
 	return new Promise((resolve) => {
 		let child: ChildProcess | undefined;
 		try {
 			child = spawn(cmd, args, { stdio: "ignore" });
 		} catch {
-			resolve(false);
+			resolve("fail");
 			return;
 		}
 		let settled = false;
-		const done = (ok: boolean) => {
+		const done = (result: PlayResult) => {
 			if (settled) return;
 			settled = true;
 			clearTimeout(timer);
-			resolve(ok);
+			resolve(result);
 		};
 		// Never hang: our chime is 0.32s. Cap playback at 2s — 2s audible
-		// is enough for a personal-use notification. Kill + count as handled
-		// so a long custom file doesn't cascade through every player.
-		// Callers are fire-and-forget.
+		// is enough for a personal-use notification. Kill + treat as handled
+		// (but not cacheable) so a long custom file doesn't cascade
+		// through every player. Callers are fire-and-forget.
 		const timer = setTimeout(() => {
 			if (settled) return;
 			settled = true;
@@ -151,7 +154,7 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 			} catch {
 				// ignore
 			}
-			resolve(true);
+			resolve("timeout");
 		}, PLAY_TIMEOUT_MS);
 		try {
 			// Fire-and-forget must not hold the event loop open.
@@ -159,8 +162,8 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 		} catch {
 			// ignore
 		}
-		child.on("error", () => done(false));
-		child.on("close", (code) => done(code === 0));
+		child.on("error", () => done("fail"));
+		child.on("close", (code) => done(code === 0 ? "ok" : "fail"));
 		try {
 			child.unref();
 		} catch {
@@ -176,8 +179,9 @@ function powershellBeep(): Promise<boolean> {
 	if (process.platform !== "win32") return Promise.resolve(false);
 	const args = ["-NoProfile", "-NonInteractive", "-Command", "[console]::beep(392,120); [console]::beep(523,180)"];
 	return (async () => {
-		if (await playCmd("pwsh", args)) return true;
-		if (await playCmd("powershell", args)) return true;
+		// ok or timeout both count as handled (2s was heard); only fail tries next.
+		if ((await playCmd("pwsh", args)) !== "fail") return true;
+		if ((await playCmd("powershell", args)) !== "fail") return true;
 		return false;
 	})();
 }
@@ -192,10 +196,14 @@ function beep(): Promise<void> {
 			const file = soundFile();
 			if (file) {
 				for (const player of orderedPlayers()) {
-					if (await playWith(player, file)) {
+					const result = await playWith(player, file);
+					if (result === "ok") {
 						cachedPlayer = player;
 						return;
 					}
+					// timeout: 2s heard so stop cascading, but don't cache
+					// a wedged player as winner.
+					if (result === "timeout") return;
 				}
 			}
 			if (await powershellBeep()) return;

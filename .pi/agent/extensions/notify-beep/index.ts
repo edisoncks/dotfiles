@@ -191,7 +191,7 @@ function beep(): Promise<void> {
 	return (async () => {
 		try {
 			const file = soundFile();
-			if (file && existsSync(file)) {
+			if (file) {
 				for (const player of orderedPlayers()) {
 					if (await playWith(player, file)) {
 						cachedPlayer = player;

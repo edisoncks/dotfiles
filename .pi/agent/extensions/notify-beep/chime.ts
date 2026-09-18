@@ -1,6 +1,14 @@
-// Bundled two-tone chime (G4 -> C5), self-generated at runtime when beep.wav
-// is absent. Mono 16-bit WAV, no dependencies. Deterministic: same bytes every run.
+// Bundled two-tone chime (G4 -> C5), self-generated at runtime.
+// Mono 16-bit WAV, no dependencies.
+// Determinism over speed: explicit per-sample LE writes (no native-endian
+// Buffer.from aliasing), same bytes on LE/BE, all OSes. Do not "optimize"
+// to a bulk native-endian copy without a BE fallback + sha check.
 export const CHIME_SR = 22050;
+// Locked reference: renderChime() must stay byte-identical.
+// len 14156, sha256 verified on Node 25 (V8). If V8 Math.* ever drifts
+// 1 LSB, update deliberately — never as a drive-by refactor.
+export const CHIME_LEN = 14156;
+export const CHIME_SHA256 = "61ea4ba99ac9b23857d5039c1cefa86f43c3bf64ca82415d79924472c2a8945a";
 
 export function renderChime(): Buffer {
 	const SR = CHIME_SR;

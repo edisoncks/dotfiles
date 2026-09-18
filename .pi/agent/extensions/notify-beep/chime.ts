@@ -11,7 +11,7 @@ export function renderChime(): Buffer {
 	const C5 = 523.25;
 
 	const n1 = Math.floor(SR * 0.12);
-	const ng = Math.floor(SR * 0.02);
+	const ng = Math.floor(SR * 0.02); // gap left as zeros = silence (Int16Array zero-filled)
 	const n2 = Math.floor(SR * 0.18);
 	const total = n1 + ng + n2;
 	const pcm = new Int16Array(total);
@@ -45,6 +45,7 @@ export function renderChime(): Buffer {
 	buf.writeUInt16LE(16, 34); // bits per sample
 	buf.write("data", 36);
 	buf.writeUInt32LE(dataBytes, 40);
-	Buffer.from(pcm.buffer).copy(buf, 44);
+	// Explicit LE writes: portable (no endianness / ArrayBuffer aliasing assumptions).
+	for (let i = 0; i < total; i++) buf.writeInt16LE(pcm[i], 44 + i * 2);
 	return buf;
 }

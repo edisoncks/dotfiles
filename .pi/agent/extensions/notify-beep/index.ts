@@ -256,11 +256,18 @@ export default function (pi: ExtensionAPI) {
 	pi.registerCommand("notify-beep", {
 		description: "Toggle notification beep when agent finishes or needs input",
 		getArgumentCompletions: (prefix: string) => {
-			const options = ["on", "off", "toggle", "status"];
+			const options = ["on", "off", "toggle", "status", "test"];
 			return options.filter((o) => o.startsWith(prefix)).map((value) => ({ value, label: value }));
 		},
 		handler: async (args, ctx) => {
 			const arg = (args || "").trim().toLowerCase();
+
+			if (arg === "test") {
+				// Bypass enabled + mode gates to exercise the audio chain.
+				void beep();
+				ctx.ui.notify("beep test…", "info");
+				return;
+			}
 
 			if (arg === "" || arg === "toggle") {
 				enabled = !enabled;
@@ -272,7 +279,7 @@ export default function (pi: ExtensionAPI) {
 				ctx.ui.notify(enabled ? "beep: on" : "beep: off", "info");
 				return;
 			} else {
-				ctx.ui.notify("Usage: /notify-beep [on|off|toggle|status]", "warning");
+				ctx.ui.notify("Usage: /notify-beep [on|off|toggle|status|test]", "warning");
 				return;
 			}
 

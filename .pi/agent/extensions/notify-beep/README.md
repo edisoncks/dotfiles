@@ -12,7 +12,7 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 ## Sound
 
 - Plays a generated two-tone chime (`G4 → C5`, `beep.wav`) via the first
-  *working* player: `pw-play` → `paplay` → `afplay` (macOS) → `mpv`
+  *working* player: `pw-play` → `paplay` → `aplay` → `afplay` (macOS) → `mpv`
   (`mpv.exe` covers Windows). A player that is installed but broken
   (e.g. `pw-play` with no PipeWire server — exits non-zero instead of
   raising a spawn error) is skipped.
@@ -26,7 +26,7 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 ## Usage
 
 - `/notify-beep` — toggle
-- `/notify-beep on|off|toggle|status`
+- `/notify-beep on|off|toggle|status|test` (`test` force-plays to check audio, ignores on/off)
 
 ## Config
 

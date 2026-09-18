@@ -103,7 +103,7 @@ function orderedPlayers(): Player[] {
 
 function bell(): void {
 	try {
-		process.stdout.write("\u0007");
+		process.stderr.write("\u0007");
 	} catch {
 		// Terminal bell must never crash the agent.
 	}

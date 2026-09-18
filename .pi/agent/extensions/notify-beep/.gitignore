@@ -1,3 +1,2 @@
-# Generated audio is not tracked; regenerate with:
-#   node scripts/generate-beep.mjs
+# Generated audio is not tracked; the extension self-generates it at runtime.
 beep.wav

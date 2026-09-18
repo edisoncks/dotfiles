@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { renderChime } from "./chime.mjs";
+import { renderChime } from "./chime.js";
 
 const SOUND = fileURLToPath(new URL("./beep.wav", import.meta.url));
 const STATE_FILE = "notify-beep.json";

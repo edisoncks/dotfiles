@@ -20,8 +20,7 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
   (`pwsh` → `powershell`), then the terminal bell. Elsewhere falls back
   directly to the terminal bell.
 - `beep.wav` is generated, not tracked in git — self-generated at runtime
-  when absent (read-only dir falls back to bell). Manual regen:
-  `node scripts/generate-beep.mjs`
+  when absent (read-only dir falls back to bell).
 - Override the sound file with `NOTIFY_BEEP_SOUND=/path/to/file`.
 
 ## Usage

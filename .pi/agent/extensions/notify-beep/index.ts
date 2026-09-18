@@ -110,7 +110,7 @@ function bell(): void {
 	}
 }
 
-const PLAY_TIMEOUT_MS = 1500;
+const PLAY_TIMEOUT_MS = 2000;
 
 // Runs cmd. Resolves true when playback succeeds (exit 0).
 // A missing server (e.g. pw-play with PipeWire down) surfaces as a
@@ -131,9 +131,10 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 			clearTimeout(timer);
 			resolve(ok);
 		};
-		// Never hang: our chime is 0.32s, so anything still running past
-		// the timeout is a long custom file or wedged — kill it and
-		// count it as handled. Callers are fire-and-forget.
+		// Never hang: our chime is 0.32s. Cap playback at 2s — 2s audible
+		// is enough for a personal-use notification. Kill + count as handled
+		// so a long custom file doesn't cascade through every player.
+		// Callers are fire-and-forget.
 		const timer = setTimeout(() => {
 			if (settled) return;
 			settled = true;
@@ -149,6 +150,12 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 			}
 			resolve(true);
 		}, PLAY_TIMEOUT_MS);
+		try {
+			// Fire-and-forget must not hold the event loop open.
+		(timer as unknown as { unref?: () => void }).unref?.();
+		} catch {
+			// ignore
+		}
 		child.on("error", () => done(false));
 		child.on("close", (code) => done(code === 0));
 		try {

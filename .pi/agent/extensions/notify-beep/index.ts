@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -46,7 +46,10 @@ function saveEnabled(enabled: boolean): void {
 	try {
 		const path = statePath();
 		if (path === null) return;
-		writeFileSync(path, JSON.stringify({ enabled }, null, 2));
+		// Atomic save: tmp + rename so a crash never leaves a half-file.
+		const tmp = `${path}.tmp`;
+		writeFileSync(tmp, JSON.stringify({ enabled }, null, 2));
+		renameSync(tmp, path);
 	} catch {
 		// Persistence must never crash the agent.
 	}

@@ -47,16 +47,18 @@ function loadConfig(): { enabled: boolean; corrupt: boolean } {
 	}
 }
 
-function saveEnabled(enabled: boolean): void {
+function saveEnabled(enabled: boolean): boolean {
 	try {
 		const path = statePath();
-		if (path === null) return;
+		if (path === null) return true;
 		// Atomic save: tmp + rename so a crash never leaves a half-file.
 		const tmp = `${path}.tmp`;
 		writeFileSync(tmp, JSON.stringify({ enabled }, null, 2));
 		renameSync(tmp, path);
+		return true;
 	} catch {
-		// Persistence must never crash the agent.
+		// Persistence must never crash the agent. Caller warns.
+		return false;
 	}
 }
 
@@ -317,8 +319,11 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (_event, ctx) => {
 		const cfg = loadConfig();
 		if (cfg.corrupt) {
-			saveEnabled(true);
+			const persisted = saveEnabled(true);
 			ctx.ui.notify("[notify-beep] corrupt config reset to default (enabled)", "warning");
+			if (!persisted) {
+				ctx.ui.notify("[notify-beep] could not persist config (check agent dir permissions)", "warning");
+			}
 			enabled = true;
 		} else {
 			enabled = cfg.enabled;
@@ -373,7 +378,11 @@ export default function (pi: ExtensionAPI) {
 				return;
 			}
 
-			saveEnabled(enabled);
+			const persisted = saveEnabled(enabled);
+			if (!persisted) {
+				ctx.ui.notify("[notify-beep] could not persist setting (check agent dir permissions)", "warning");
+				return;
+			}
 			ctx.ui.notify(enabled ? "beep: on" : "beep: off", "info");
 		},
 	});

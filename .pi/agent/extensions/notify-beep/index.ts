@@ -79,6 +79,7 @@ type Player = {
 const PLAYERS: Player[] = [
 	{ cmd: "pw-play", args: ["{file}"] },
 	{ cmd: "paplay", args: ["{file}"] },
+	{ cmd: "aplay", args: ["-q", "{file}"] },
 	{ cmd: "afplay", args: ["{file}"] },
 	{ cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] },
 ];

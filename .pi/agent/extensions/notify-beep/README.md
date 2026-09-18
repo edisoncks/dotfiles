@@ -34,5 +34,6 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 
 - `~/.pi/agent/notify-beep.json` as `{"enabled": true|false}` (respects custom agent dir)
 - Created only on first `on`/`off`/`toggle`, never on `status` or load.
-- A corrupt config reads as enabled and is healed to `{"enabled": true}`
+- A corrupt config (bad JSON, non-object, array, or non-boolean `enabled`)
+  reads as enabled and is healed to `{"enabled": true}`
   at `session_start` with a `ui.notify` warning (never repaired at import).

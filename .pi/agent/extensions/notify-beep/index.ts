@@ -32,7 +32,10 @@ function loadConfig(): { enabled: boolean; corrupt: boolean } {
 		} catch {
 			return { enabled: true, corrupt: true };
 		}
-		if (typeof raw === "object" && raw !== null) {
+		if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+			return { enabled: true, corrupt: true };
+		}
+		{
 			const enabled = (raw as { enabled?: unknown }).enabled;
 			if (enabled === undefined) return { enabled: true, corrupt: false };
 			if (typeof enabled === "boolean") return { enabled, corrupt: false };
@@ -103,9 +106,19 @@ function bundledSoundFile(): string | null {
 
 function soundFile(): string | null {
 	const override = process.env.NOTIFY_BEEP_SOUND?.trim();
-	// No existsSync gate: a missing override fails fast via players -> bell.
-	// Existence checks are perf-only; player exit codes are authoritative.
-	if (override) return override;
+	if (override) {
+		// Fast-path filter for a typo'd override: skip 5 doomed spawns and
+		// go straight to bell. TOCTOU-safe: worst case the file vanishes
+		// between here and spawn, players fail, we bell anyway.
+		// Player PATH lookup intentionally has no existsSync gate — spawn
+		// exit codes are authoritative, avoiding check-then-spawn races.
+		try {
+			if (!existsSync(override)) return null;
+		} catch {
+			return null;
+		}
+		return override;
+	}
 	return bundledSoundFile();
 }
 
@@ -250,7 +263,9 @@ function beep(opts?: { force?: boolean }): Promise<void> {
 }
 
 export default function (pi: ExtensionAPI) {
-	let enabled = loadConfig().enabled;
+	// Fail-open default; no IO at factory time. session_start is the
+	// single source of truth for config.
+	let enabled = true;
 
 	pi.on("session_start", (_event, ctx) => {
 		const cfg = loadConfig();

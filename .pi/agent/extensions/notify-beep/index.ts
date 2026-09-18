@@ -116,14 +116,14 @@ function bell(): void {
 
 const PLAY_TIMEOUT_MS = 1500;
 
-// Plays file with player. Resolves true when playback succeeds (exit 0).
+// Runs cmd. Resolves true when playback succeeds (exit 0).
 // A missing server (e.g. pw-play with PipeWire down) surfaces as a
 // non-zero exit, not a spawn error, so watch close codes, not just errors.
-function playWith(player: Player, file: string): Promise<boolean> {
+function playCmd(cmd: string, args: string[]): Promise<boolean> {
 	return new Promise((resolve) => {
 		let child;
 		try {
-			child = spawn(player.cmd, buildArgs(player, file), { stdio: "ignore" });
+			child = spawn(cmd, args, { stdio: "ignore" });
 		} catch {
 			resolve(false);
 			return;
@@ -164,6 +164,24 @@ function playWith(player: Player, file: string): Promise<boolean> {
 }
 
 // Never rejects: all failures fall through to bell(), which is safe.
+function playWith(player: Player, file: string): Promise<boolean> {
+	return playCmd(player.cmd, buildArgs(player, file));
+}
+
+// Win32-only fallback after file players, before the terminal bell.
+// mpv.exe already covers Windows file playback; this is for boxes
+// with no player at all. Single command string, no quoting builder.
+function powershellBeep(): Promise<boolean> {
+	if (process.platform !== "win32") return Promise.resolve(false);
+	const args = ["-NoProfile", "-NonInteractive", "-Command", "[console]::beep(392,120); [console]::beep(523,180)"];
+	return (async () => {
+		if (await playCmd("pwsh", args)) return true;
+		if (await playCmd("powershell", args)) return true;
+		return false;
+	})();
+}
+
+// Never rejects: all failures fall through to bell(), which is safe.
 function beep(): Promise<void> {
 	const now = Date.now();
 	if (now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
@@ -179,6 +197,7 @@ function beep(): Promise<void> {
 					}
 				}
 			}
+			if (await powershellBeep()) return;
 			bell();
 		} catch {
 			try {

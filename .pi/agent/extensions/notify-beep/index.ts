@@ -76,7 +76,9 @@ const PLAYERS: Player[] = [
 	{ cmd: "mpv", args: (f) => ["--no-video", "--really-quiet", "--no-terminal", f] },
 ];
 
-let cachedPlayer: Player | null | undefined;
+let cachedPlayer: Player | undefined;
+
+// Players known to work, cached winner first.
 
 function isExecutable(cmd: string): boolean {
 	if (cmd === "afplay" && process.platform !== "darwin") return false;
@@ -96,10 +98,12 @@ function isExecutable(cmd: string): boolean {
 	return false;
 }
 
-function resolvePlayer(): Player | null {
-	if (cachedPlayer !== undefined) return cachedPlayer;
-	cachedPlayer = PLAYERS.find((p) => isExecutable(p.cmd)) ?? null;
-	return cachedPlayer;
+function orderedPlayers(): Player[] {
+	const found = PLAYERS.filter((p) => isExecutable(p.cmd));
+	if (cachedPlayer && found.includes(cachedPlayer)) {
+		return [cachedPlayer, ...found.filter((p) => p !== cachedPlayer)];
+	}
+	return found;
 }
 
 function bell(): void {
@@ -110,34 +114,69 @@ function bell(): void {
 	}
 }
 
-function beep(): void {
-	const now = Date.now();
-	if (now - lastBeep < DEBOUNCE_MS) return;
-	lastBeep = now;
-	try {
-		const file = soundFile();
-		if (!existsSync(file)) {
-			bell();
-			return;
-		}
-		const player = resolvePlayer();
-		if (player === null) {
-			bell();
-			return;
-		}
-		const child = spawn(player.cmd, player.args(file), {
-			detached: true,
-			stdio: "ignore",
-		});
-		child.on("error", () => bell());
-		child.unref();
-	} catch {
+const PLAY_TIMEOUT_MS = 5000;
+
+// Plays file with player. Resolves true when playback succeeds (exit 0).
+// A missing server (e.g. pw-play with PipeWire down) surfaces as a
+// non-zero exit, not a spawn error, so watch close codes, not just errors.
+function playWith(player: Player, file: string): Promise<boolean> {
+	return new Promise((resolve) => {
+		let child;
 		try {
+			child = spawn(player.cmd, player.args(file), { stdio: "ignore" });
+		} catch {
+			resolve(false);
+			return;
+		}
+		let settled = false;
+		const done = (ok: boolean) => {
+			if (settled) return;
+			settled = true;
+			clearTimeout(timer);
+			resolve(ok);
+		};
+		// Never hang the handler: our chime is 0.32s, so anything still
+		// running past the timeout is a long custom file (leave it playing)
+		// or wedged (stop waiting) — either way, count it as handled.
+		const timer = setTimeout(() => {
+			if (settled) return;
+			settled = true;
+			try {
+				child.unref();
+			} catch {
+				// ignore
+			}
+			resolve(true);
+		}, PLAY_TIMEOUT_MS);
+		child.on("error", () => done(false));
+		child.on("close", (code) => done(code === 0));
+	});
+}
+
+function beep(): Promise<void> {
+	const now = Date.now();
+	if (now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
+	lastBeep = now;
+	return (async () => {
+		try {
+			const file = soundFile();
+			if (existsSync(file)) {
+				for (const player of orderedPlayers()) {
+					if (await playWith(player, file)) {
+						cachedPlayer = player;
+						return;
+					}
+				}
+			}
 			bell();
 		} catch {
-			// Notifications must never crash the agent.
+			try {
+				bell();
+			} catch {
+				// Notifications must never crash the agent.
+			}
 		}
-	}
+	})();
 }
 
 export default function (pi: ExtensionAPI) {
@@ -150,13 +189,13 @@ export default function (pi: ExtensionAPI) {
 	pi.on("agent_settled", async (_event, ctx) => {
 		if (!enabled) return;
 		if (ctx.mode !== "tui") return;
-		beep();
+		await beep();
 	});
 
 	pi.on("ui_prompt_start", async (_event, ctx) => {
 		if (!enabled) return;
 		if (ctx.mode !== "tui") return;
-		beep();
+		await beep();
 	});
 
 	pi.registerCommand("notify-beep", {

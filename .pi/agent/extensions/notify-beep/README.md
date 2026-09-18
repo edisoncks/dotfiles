@@ -12,8 +12,10 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 ## Sound
 
 - Plays a generated two-tone chime (`G4 → C5`, `beep.wav`) via the first
-  available player: `pw-play` → `paplay` → `afplay` (macOS) → `mpv`.
-- Falls back to the terminal bell when no player or sound file is available.
+  *working* player: `pw-play` → `paplay` → `afplay` (macOS) → `mpv`.
+  A player that is installed but broken (e.g. `pw-play` with no PipeWire
+  server — exits non-zero instead of raising a spawn error) is skipped.
+- Falls back to the terminal bell when no player or sound file works.
 - `beep.wav` is generated, not tracked in git — regenerate with:
   `node scripts/generate-beep.mjs`
 - Override the sound file with `NOTIFY_BEEP_SOUND=/path/to/file`.

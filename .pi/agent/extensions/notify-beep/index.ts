@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const SOUND = fileURLToPath(new URL("./beep.mp3", import.meta.url));
+const SOUND = fileURLToPath(new URL("./beep.wav", import.meta.url));
 const STATE_FILE = "notify-beep.json";
 
 function statePath(): string | null {

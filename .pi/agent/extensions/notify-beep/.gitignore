@@ -1,0 +1,3 @@
+# Generated audio is not tracked; regenerate with:
+#   node scripts/generate-beep.mjs
+beep.wav

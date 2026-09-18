@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { access as accessAsync, writeFile as writeFileAsync } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
@@ -182,6 +183,9 @@ export default function (pi: ExtensionAPI) {
 	let isPlaying = false;
 	// True while a playback chain is in-flight. Overlapping beeps are
 	// dropped (notification, not orchestra) to avoid stacking 5×2s chains.
+	// Background warmup so first beep doesn't pay sync render+write cost.
+	// Never awaited by session_start (zero startup block); beep() awaits it.
+	let warmupPromise: Promise<string | null> | null = null;
 
 	function bundledSoundFile(): string | null {
 		if (bundledCache !== undefined) return bundledCache;
@@ -241,6 +245,29 @@ export default function (pi: ExtensionAPI) {
 		return available;
 	}
 
+	// Async pre-warm of the agent-dir cache. Same bytes as sync path,
+	// but never blocks startup or the event loop. Tmp fallback stays
+	// sync in bundledSoundFile() so beep() always has a path.
+	async function ensureChimeAsync(): Promise<string | null> {
+		if (bundledCache !== undefined) return bundledCache;
+		const cached = cachedChimePath();
+		if (!cached) return null;
+		try {
+			await accessAsync(cached);
+			bundledCache = cached;
+			return cached;
+		} catch {
+			// Missing: try to create it.
+		}
+		try {
+			await writeFileAsync(cached, renderChime(), { mode: 0o600 });
+			bundledCache = cached;
+			return cached;
+		} catch {
+			return null;
+		}
+	}
+
 	// Never rejects: all failures fall through to bell(), which is safe.
 	function beep(opts?: { force?: boolean }): Promise<void> {
 		const now = performance.now();
@@ -254,6 +281,16 @@ export default function (pi: ExtensionAPI) {
 		isPlaying = true;
 		return (async () => {
 			try {
+				// If background warmup is in-flight, join it instead of
+				// duplicating the render+write synchronously.
+				const warmup = warmupPromise;
+				if (warmup) {
+					try {
+						await warmup;
+					} catch {
+						// Warmup never rejects (returns null), but stay safe.
+					}
+				}
 				const file = soundFile();
 				if (file) {
 					for (const player of orderedPlayers()) {
@@ -286,6 +323,10 @@ export default function (pi: ExtensionAPI) {
 		} else {
 			enabled = cfg.enabled;
 		}
+		// Fire-and-forget warmup: zero startup block. beep() awaits it.
+		// ensureChimeAsync never rejects (null on failure).
+		warmupPromise = ensureChimeAsync();
+		warmupPromise.catch(() => null);
 	});
 
 	const maybeBeep = (mode: unknown) => {

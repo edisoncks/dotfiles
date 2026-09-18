@@ -83,8 +83,11 @@ const PLAYERS: Player[] = [
 	{ cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] },
 ];
 
-function buildArgs(player: Player, file: string): string[] {
-	return player.args.map((a) => (a === "{file}" ? file : a));
+function playWith(player: Player, file: string): Promise<boolean> {
+	return playCmd(
+		player.cmd,
+		player.args.map((a) => (a === "{file}" ? file : a)),
+	);
 }
 
 // Players known to work, cached winner first.
@@ -162,10 +165,6 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 	});
 }
 
-function playWith(player: Player, file: string): Promise<boolean> {
-	return playCmd(player.cmd, buildArgs(player, file));
-}
-
 // Win32-only fallback after file players, before the terminal bell.
 // mpv.exe already covers Windows file playback; this is for boxes
 // with no player at all. Single command string, no quoting builder.
@@ -220,7 +219,7 @@ export default function (pi: ExtensionAPI) {
 	const maybeBeep = (mode: unknown) => {
 		if (!enabled) return;
 		if (mode !== "tui") return;
-		void beep().catch(() => {});
+		void beep();
 	};
 
 	pi.on("agent_settled", (_event, ctx) => {

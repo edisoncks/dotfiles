@@ -1,7 +1,6 @@
 // Bundled two-tone chime (G4 -> C5), self-generated at runtime when beep.wav
 // is absent. Mono 16-bit WAV, no dependencies. Deterministic: same bytes every run.
 export const CHIME_SR = 22050;
-export const CHIME_DUR_S = 0.32;
 
 export function renderChime(): Buffer {
 	const SR = CHIME_SR;

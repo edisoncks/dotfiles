@@ -35,10 +35,16 @@ function saveEnabled(enabled: boolean): void {
 }
 
 function statusText(enabled: boolean): string {
-	return enabled ? "🔊 beep on" : "🔇 beep off";
+	return enabled ? "beep: on" : "beep: off";
 }
 
+const DEBOUNCE_MS = 1500;
+let lastBeep = 0;
+
 function beep(): void {
+	const now = Date.now();
+	if (now - lastBeep < DEBOUNCE_MS) return;
+	lastBeep = now;
 	try {
 		const child = spawn("mpv", ["--no-video", "--really-quiet", "--no-terminal", SOUND], {
 			detached: true,
@@ -74,8 +80,7 @@ export default function (pi: ExtensionAPI) {
 		description: "Toggle notification beep when agent finishes or needs input",
 		getArgumentCompletions: (prefix: string) => {
 			const options = ["on", "off", "toggle", "status"];
-			const filtered = options.filter((o) => o.startsWith(prefix));
-			return filtered.length > 0 ? filtered.map((value) => ({ value, label: value })) : null;
+			return options.filter((o) => o.startsWith(prefix)).map((value) => ({ value, label: value }));
 		},
 		handler: async (args, ctx) => {
 			const arg = (args || "").trim().toLowerCase();

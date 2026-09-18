@@ -55,12 +55,8 @@ function saveEnabled(enabled: boolean): void {
 const DEBOUNCE_MS = 1500;
 let lastBeep = -Infinity;
 
-let chimeEnsured = false;
-
 function bundledSoundFile(): string | null {
 	if (existsSync(SOUND)) return SOUND;
-	if (chimeEnsured) return null;
-	chimeEnsured = true;
 	try {
 		writeFileSync(SOUND, renderChime());
 		return SOUND;

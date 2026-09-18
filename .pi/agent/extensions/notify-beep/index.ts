@@ -114,7 +114,7 @@ function bell(): void {
 	}
 }
 
-const PLAY_TIMEOUT_MS = 5000;
+const PLAY_TIMEOUT_MS = 1500;
 
 // Plays file with player. Resolves true when playback succeeds (exit 0).
 // A missing server (e.g. pw-play with PipeWire down) surfaces as a
@@ -135,12 +135,17 @@ function playWith(player: Player, file: string): Promise<boolean> {
 			clearTimeout(timer);
 			resolve(ok);
 		};
-		// Never hang the handler: our chime is 0.32s, so anything still
-		// running past the timeout is a long custom file (leave it playing)
-		// or wedged (stop waiting) — either way, count it as handled.
+		// Never hang: our chime is 0.32s, so anything still running past
+		// the timeout is a long custom file or wedged — kill it and
+		// count it as handled. Callers are fire-and-forget.
 		const timer = setTimeout(() => {
 			if (settled) return;
 			settled = true;
+			try {
+				child.kill("SIGKILL");
+			} catch {
+				// ignore
+			}
 			try {
 				child.unref();
 			} catch {
@@ -150,9 +155,15 @@ function playWith(player: Player, file: string): Promise<boolean> {
 		}, PLAY_TIMEOUT_MS);
 		child.on("error", () => done(false));
 		child.on("close", (code) => done(code === 0));
+		try {
+			child.unref();
+		} catch {
+			// ignore
+		}
 	});
 }
 
+// Never rejects: all failures fall through to bell(), which is safe.
 function beep(): Promise<void> {
 	const now = Date.now();
 	if (now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
@@ -186,16 +197,16 @@ export default function (pi: ExtensionAPI) {
 		enabled = loadEnabled();
 	});
 
-	pi.on("agent_settled", async (_event, ctx) => {
+	pi.on("agent_settled", (_event, ctx) => {
 		if (!enabled) return;
 		if (ctx.mode !== "tui") return;
-		await beep();
+		void beep().catch(() => {});
 	});
 
-	pi.on("ui_prompt_start", async (_event, ctx) => {
+	pi.on("ui_prompt_start", (_event, ctx) => {
 		if (!enabled) return;
 		if (ctx.mode !== "tui") return;
-		await beep();
+		void beep().catch(() => {});
 	});
 
 	pi.registerCommand("notify-beep", {

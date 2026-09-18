@@ -60,9 +60,6 @@ function saveEnabled(enabled: boolean): void {
 }
 
 const DEBOUNCE_MS = 1500;
-let lastBeep = -Infinity;
-
-let bundledCache: string | undefined;
 
 function cachedChimePath(): string | null {
 	try {
@@ -70,56 +67,6 @@ function cachedChimePath(): string | null {
 	} catch {
 		return null;
 	}
-}
-
-function bundledSoundFile(): string | null {
-	if (bundledCache !== undefined) return bundledCache;
-	// Primary: persistent cache in agent dir (respects custom agent dir).
-	// Source dir is immutable — never write next to index.ts.
-	const cached = cachedChimePath();
-	if (cached) {
-		try {
-			if (existsSync(cached)) {
-				bundledCache = cached;
-				return cached;
-			}
-			writeFileSync(cached, renderChime(), { mode: 0o600 });
-			bundledCache = cached;
-			return cached;
-		} catch {
-			// Fall through to tmp fallback.
-		}
-	}
-	// Fallback: single-use tmp file in a fresh mkdtemp dir (no predictable
-	// /tmp name, no symlink race). Cached in memory only, not persistently.
-	try {
-		const dir = mkdtempSync(join(tmpdir(), "pi-beep-"));
-		const tmpFile = join(dir, "chime.wav");
-		writeFileSync(tmpFile, renderChime(), { mode: 0o600 });
-		bundledCache = tmpFile;
-		return tmpFile;
-	} catch {
-		// No cache on failure: retry next beep instead of bell-forever.
-		return null;
-	}
-}
-
-function soundFile(): string | null {
-	const override = process.env.NOTIFY_BEEP_SOUND?.trim();
-	if (override) {
-		// Fast-path filter for a typo'd override: skip 5 doomed spawns and
-		// go straight to bell. TOCTOU-safe: worst case the file vanishes
-		// between here and spawn, players fail, we bell anyway.
-		// Player PATH lookup intentionally has no existsSync gate — spawn
-		// exit codes are authoritative, avoiding check-then-spawn races.
-		try {
-			if (!existsSync(override)) return null;
-		} catch {
-			return null;
-		}
-		return override;
-	}
-	return bundledSoundFile();
 }
 
 type Player = {
@@ -134,24 +81,6 @@ const PLAYERS: Player[] = [
 	{ cmd: "afplay", args: ["{file}"] },
 	{ cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] },
 ];
-
-function playWith(player: Player, file: string): Promise<PlayResult> {
-	return playCmd(
-		player.cmd,
-		player.args.map((a) => (a === "{file}" ? file : a)),
-	);
-}
-
-// Players known to work, cached winner first.
-let cachedPlayer: Player | undefined;
-
-function orderedPlayers(): Player[] {
-	const available = PLAYERS.filter((p) => !(p.cmd === "afplay" && process.platform !== "darwin"));
-	if (cachedPlayer && available.includes(cachedPlayer)) {
-		return [cachedPlayer, ...available.filter((p) => p !== cachedPlayer)];
-	}
-	return available;
-}
 
 function bell(): void {
 	try {
@@ -220,6 +149,13 @@ function playCmd(cmd: string, args: string[]): Promise<PlayResult> {
 	});
 }
 
+function playWith(player: Player, file: string): Promise<PlayResult> {
+	return playCmd(
+		player.cmd,
+		player.args.map((a) => (a === "{file}" ? file : a)),
+	);
+}
+
 // Win32-only fallback after file players, before the terminal bell.
 // mpv.exe already covers Windows file playback; this is for boxes
 // with no player at all. Single command string, no quoting builder.
@@ -234,38 +170,101 @@ function powershellBeep(): Promise<boolean> {
 	})();
 }
 
-// Never rejects: all failures fall through to bell(), which is safe.
-function beep(opts?: { force?: boolean }): Promise<void> {
-	const now = performance.now();
-	if (!opts?.force && now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
-	lastBeep = now;
-	return (async () => {
-		try {
-			const file = soundFile();
-			if (file) {
-				for (const player of orderedPlayers()) {
-					const result = await playWith(player, file);
-					if (result === "ok") {
-						cachedPlayer = player;
-						return;
-					}
-					// timeout: 2s heard so stop cascading, but don't cache
-					// a wedged player as winner.
-					if (result === "timeout") return;
-				}
-			}
-			if (await powershellBeep()) return;
-			bell();
-		} catch {
-			bell();
-		}
-	})();
-}
-
 export default function (pi: ExtensionAPI) {
 	// Fail-open default; no IO at factory time. session_start is the
 	// single source of truth for config.
 	let enabled = true;
+	// Per-instance mutable state (no module globals): fresh on reload,
+	// no stale winner/cache across extension reloads.
+	let lastBeep = -Infinity;
+	let bundledCache: string | undefined;
+	let cachedPlayer: Player | undefined;
+
+	function bundledSoundFile(): string | null {
+		if (bundledCache !== undefined) return bundledCache;
+		// Primary: persistent cache in agent dir (respects custom agent dir).
+		// Source dir is immutable — never write next to index.ts.
+		const cached = cachedChimePath();
+		if (cached) {
+			try {
+				if (existsSync(cached)) {
+					bundledCache = cached;
+					return cached;
+				}
+				writeFileSync(cached, renderChime(), { mode: 0o600 });
+				bundledCache = cached;
+				return cached;
+			} catch {
+				// Fall through to tmp fallback.
+			}
+		}
+		// Fallback: single-use tmp file in a fresh mkdtemp dir (no predictable
+		// /tmp name, no symlink race). Cached in memory only, not persistently.
+		try {
+			const dir = mkdtempSync(join(tmpdir(), "pi-beep-"));
+			const tmpFile = join(dir, "chime.wav");
+			writeFileSync(tmpFile, renderChime(), { mode: 0o600 });
+			bundledCache = tmpFile;
+			return tmpFile;
+		} catch {
+			// No cache on failure: retry next beep instead of bell-forever.
+			return null;
+		}
+	}
+
+	function soundFile(): string | null {
+		const override = process.env.NOTIFY_BEEP_SOUND?.trim();
+		if (override) {
+			// Fast-path filter for a typo'd override: skip 5 doomed spawns and
+			// go straight to bell. TOCTOU-safe: worst case the file vanishes
+			// between here and spawn, players fail, we bell anyway.
+			// Player PATH lookup intentionally has no existsSync gate — spawn
+			// exit codes are authoritative, avoiding check-then-spawn races.
+			try {
+				if (!existsSync(override)) return null;
+			} catch {
+				return null;
+			}
+			return override;
+		}
+		return bundledSoundFile();
+	}
+
+	function orderedPlayers(): Player[] {
+		const available = PLAYERS.filter((p) => !(p.cmd === "afplay" && process.platform !== "darwin"));
+		if (cachedPlayer && available.includes(cachedPlayer)) {
+			return [cachedPlayer, ...available.filter((p) => p !== cachedPlayer)];
+		}
+		return available;
+	}
+
+	// Never rejects: all failures fall through to bell(), which is safe.
+	function beep(opts?: { force?: boolean }): Promise<void> {
+		const now = performance.now();
+		if (!opts?.force && now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
+		lastBeep = now;
+		return (async () => {
+			try {
+				const file = soundFile();
+				if (file) {
+					for (const player of orderedPlayers()) {
+						const result = await playWith(player, file);
+						if (result === "ok") {
+							cachedPlayer = player;
+							return;
+						}
+						// timeout: 2s heard so stop cascading, but don't cache
+						// a wedged player as winner.
+						if (result === "timeout") return;
+					}
+				}
+				if (await powershellBeep()) return;
+				bell();
+			} catch {
+				bell();
+			}
+		})();
+	}
 
 	pi.on("session_start", (_event, ctx) => {
 		const cfg = loadConfig();

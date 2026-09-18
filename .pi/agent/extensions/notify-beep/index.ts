@@ -75,7 +75,7 @@ function saveEnabled(enabled: boolean): void {
 }
 
 const DEBOUNCE_MS = 1500;
-let lastBeep = 0;
+let lastBeep = -Infinity;
 
 let chimeEnsured = false;
 

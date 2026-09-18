@@ -58,19 +58,30 @@ function saveEnabled(enabled: boolean): void {
 const DEBOUNCE_MS = 1500;
 let lastBeep = -Infinity;
 
+let bundledCache: string | null | undefined;
+
 function bundledSoundFile(): string | null {
-	if (existsSync(SOUND)) return SOUND;
+	if (bundledCache !== undefined) return bundledCache;
+	if (existsSync(SOUND)) {
+		bundledCache = SOUND;
+		return SOUND;
+	}
 	try {
 		writeFileSync(SOUND, renderChime());
+		bundledCache = SOUND;
 		return SOUND;
 	} catch {
+		// Read-only install dir: cache failure so we don't hammer the FS every beep.
+		bundledCache = null;
 		return null;
 	}
 }
 
 function soundFile(): string | null {
 	const override = process.env.NOTIFY_BEEP_SOUND?.trim();
-	if (override && existsSync(override)) return override;
+	// No existsSync gate: a missing override fails fast via players -> bell.
+	// Existence checks are perf-only; player exit codes are authoritative.
+	if (override) return override;
 	return bundledSoundFile();
 }
 

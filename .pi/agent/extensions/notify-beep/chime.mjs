@@ -1,10 +1,14 @@
 // Single source of truth for the bundled two-tone chime (G4 -> C5).
+// Plain .mjs (no TypeScript syntax) so it runs on any Node build,
+// including Ubuntu/Debian builds compiled --without-amaro where
+// importing a .ts file throws ERR_NO_TYPESCRIPT.
 // Imported by index.ts (runtime self-heal) and scripts/generate-beep.mjs.
 // Mono 16-bit WAV, no dependencies. Deterministic: same bytes every run.
 export const CHIME_SR = 22050;
 export const CHIME_DUR_S = 0.32;
 
-export function renderChime(): Buffer {
+/** @returns {Buffer} 44-byte-header mono 16-bit WAV, deterministic. */
+export function renderChime() {
 	const SR = CHIME_SR;
 	const PEAK = 0.4;
 	const DECAY_K = 14;
@@ -18,7 +22,7 @@ export function renderChime(): Buffer {
 	const total = n1 + ng + n2;
 	const pcm = new Int16Array(total);
 
-	const render = (offset: number, n: number, freq: number) => {
+	const render = (offset, n, freq) => {
 		for (let i = 0; i < n; i++) {
 			const t = i / SR;
 			let v = PEAK * Math.exp(-t * DECAY_K) * Math.sin(2 * Math.PI * freq * t);

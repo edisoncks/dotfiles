@@ -28,7 +28,7 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 ## Usage
 
 - `/notify-beep` — toggle
-- `/notify-beep on|off|toggle|status|test` (`test` force-plays to check audio, ignores on/off)
+- `/notify-beep on|off|toggle|status|test` (`test` force-plays to check audio, ignores on/off and debounce)
 
 ## Config
 

@@ -222,9 +222,9 @@ function powershellBeep(): Promise<boolean> {
 }
 
 // Never rejects: all failures fall through to bell(), which is safe.
-function beep(): Promise<void> {
+function beep(opts?: { force?: boolean }): Promise<void> {
 	const now = performance.now();
-	if (now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
+	if (!opts?.force && now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
 	lastBeep = now;
 	return (async () => {
 		try {
@@ -287,8 +287,8 @@ export default function (pi: ExtensionAPI) {
 			const arg = (args || "").trim().toLowerCase();
 
 			if (arg === "test") {
-				// Bypass enabled + mode gates to exercise the audio chain.
-				void beep();
+				// Bypass enabled + mode + debounce gates to exercise the audio chain.
+				void beep({ force: true });
 				ctx.ui.notify("beep test…", "info");
 				return;
 			}

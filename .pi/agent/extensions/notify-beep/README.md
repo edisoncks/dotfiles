@@ -11,7 +11,8 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 
 ## Sound
 
-- Plays a generated two-tone chime (`G4 → C5`, `beep.wav`) via the first
+- Plays a generated two-tone chime (`G4 → C5`, `notify-beep-chime.wav` cached
+  in the agent dir) via the first
   *working* player: `pw-play` → `paplay` → `aplay` → `afplay` (macOS) → `mpv`
   (`mpv.exe` covers Windows). A player that is installed but broken
   (e.g. `pw-play` with no PipeWire server — exits non-zero instead of
@@ -19,8 +20,9 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 - On Windows with no player, falls back to a PowerShell two-tone beep
   (`pwsh` → `powershell`), then the terminal bell. Elsewhere falls back
   directly to the terminal bell.
-- `beep.wav` is generated, not tracked in git — self-generated at runtime
-  when absent (read-only dir falls back to bell).
+- Chime is generated, never written next to source — cached as
+  `<agent-dir>/notify-beep-chime.wav` with a `mkdtemp` tmp fallback
+  (else bell). Read-only install dirs work.
 - Override the sound file with `NOTIFY_BEEP_SOUND=/path/to/file`.
 
 ## Usage

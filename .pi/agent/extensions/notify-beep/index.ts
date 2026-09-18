@@ -1,12 +1,13 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { performance } from "node:perf_hooks";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { renderChime } from "./chime.js";
 
-const SOUND = fileURLToPath(new URL("./beep.wav", import.meta.url));
 const STATE_FILE = "notify-beep.json";
+const CHIME_FILE = "notify-beep-chime.wav";
 
 function statePath(): string | null {
 	try {
@@ -58,21 +59,44 @@ function saveEnabled(enabled: boolean): void {
 const DEBOUNCE_MS = 1500;
 let lastBeep = -Infinity;
 
-let bundledCache: string | null | undefined;
+let bundledCache: string | undefined;
+
+function cachedChimePath(): string | null {
+	try {
+		return join(getAgentDir(), CHIME_FILE);
+	} catch {
+		return null;
+	}
+}
 
 function bundledSoundFile(): string | null {
 	if (bundledCache !== undefined) return bundledCache;
-	if (existsSync(SOUND)) {
-		bundledCache = SOUND;
-		return SOUND;
+	// Primary: persistent cache in agent dir (respects custom agent dir).
+	// Source dir is immutable — never write next to index.ts.
+	const cached = cachedChimePath();
+	if (cached) {
+		try {
+			if (existsSync(cached)) {
+				bundledCache = cached;
+				return cached;
+			}
+			writeFileSync(cached, renderChime(), { mode: 0o600 });
+			bundledCache = cached;
+			return cached;
+		} catch {
+			// Fall through to tmp fallback.
+		}
 	}
+	// Fallback: single-use tmp file in a fresh mkdtemp dir (no predictable
+	// /tmp name, no symlink race). Cached in memory only, not persistently.
 	try {
-		writeFileSync(SOUND, renderChime());
-		bundledCache = SOUND;
-		return SOUND;
+		const dir = mkdtempSync(join(tmpdir(), "pi-beep-"));
+		const tmpFile = join(dir, "chime.wav");
+		writeFileSync(tmpFile, renderChime(), { mode: 0o600 });
+		bundledCache = tmpFile;
+		return tmpFile;
 	} catch {
-		// Read-only install dir: cache failure so we don't hammer the FS every beep.
-		bundledCache = null;
+		// No cache on failure: retry next beep instead of bell-forever.
 		return null;
 	}
 }

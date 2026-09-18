@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { access as accessAsync, writeFile as writeFileAsync } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -207,17 +207,32 @@ export default function (pi: ExtensionAPI) {
 				// Fall through to tmp fallback.
 			}
 		}
-		// Fallback: single-use tmp file in a fresh mkdtemp dir (no predictable
-		// /tmp name, no symlink race). Cached in memory only, not persistently.
+		// Fallback: single tmp file, no mkdtemp dir leak. PID-suffixed + O_EXCL
+		// (wx) so creation is authoritative: no check-then-use race, no
+		// symlink clobber. EEXIST means stale PID-reuse or a squatter —
+		// unlink once and retry, else bell (never trust an unknown file).
+		const tmpFile = join(tmpdir(), `pi-beep-${process.pid}.wav`);
 		try {
-			const dir = mkdtempSync(join(tmpdir(), "pi-beep-"));
-			const tmpFile = join(dir, "chime.wav");
-			writeFileSync(tmpFile, renderChime(), { mode: 0o600 });
+			writeFileSync(tmpFile, renderChime(), { mode: 0o600, flag: "wx" });
 			bundledCache = tmpFile;
 			return tmpFile;
-		} catch {
-			// No cache on failure: retry next beep instead of bell-forever.
-			return null;
+		} catch (e: unknown) {
+			if ((e as NodeJS.ErrnoException)?.code !== "EEXIST") {
+				// No cache on failure: retry next beep instead of bell-forever.
+				return null;
+			}
+			try {
+				unlinkSync(tmpFile);
+			} catch {
+				return null;
+			}
+			try {
+				writeFileSync(tmpFile, renderChime(), { mode: 0o600, flag: "wx" });
+				bundledCache = tmpFile;
+				return tmpFile;
+			} catch {
+				return null;
+			}
 		}
 	}
 

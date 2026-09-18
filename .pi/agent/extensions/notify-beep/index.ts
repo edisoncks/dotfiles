@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { renderChime } from "./chime.js";
 
 const SOUND = fileURLToPath(new URL("./beep.wav", import.meta.url));
 const STATE_FILE = "notify-beep.json";
@@ -58,10 +59,24 @@ function statusText(enabled: boolean): string {
 const DEBOUNCE_MS = 1500;
 let lastBeep = 0;
 
-function soundFile(): string {
+let chimeEnsured = false;
+
+function bundledSoundFile(): string | null {
+	if (existsSync(SOUND)) return SOUND;
+	if (chimeEnsured) return null;
+	chimeEnsured = true;
+	try {
+		writeFileSync(SOUND, renderChime());
+		return SOUND;
+	} catch {
+		return null;
+	}
+}
+
+function soundFile(): string | null {
 	const override = process.env.NOTIFY_BEEP_SOUND?.trim();
 	if (override && existsSync(override)) return override;
-	return SOUND;
+	return bundledSoundFile();
 }
 
 type Player = {
@@ -145,7 +160,7 @@ function beep(): Promise<void> {
 	return (async () => {
 		try {
 			const file = soundFile();
-			if (existsSync(file)) {
+			if (file && existsSync(file)) {
 				for (const player of orderedPlayers()) {
 					if (await playWith(player, file)) {
 						cachedPlayer = player;

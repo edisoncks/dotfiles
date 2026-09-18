@@ -152,7 +152,7 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 		}, PLAY_TIMEOUT_MS);
 		try {
 			// Fire-and-forget must not hold the event loop open.
-		(timer as unknown as { unref?: () => void }).unref?.();
+			(timer as unknown as { unref?: () => void }).unref?.();
 		} catch {
 			// ignore
 		}

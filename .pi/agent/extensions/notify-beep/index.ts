@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { accessSync, constants, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
@@ -64,46 +64,31 @@ function soundFile(): string {
 	return SOUND;
 }
 
-interface Player {
+type Player = {
 	cmd: string;
-	args: (file: string) => string[];
-}
+	args: string[];
+};
 
 const PLAYERS: Player[] = [
-	{ cmd: "pw-play", args: (f) => [f] },
-	{ cmd: "paplay", args: (f) => [f] },
-	{ cmd: "afplay", args: (f) => [f] },
-	{ cmd: "mpv", args: (f) => ["--no-video", "--really-quiet", "--no-terminal", f] },
+	{ cmd: "pw-play", args: ["{file}"] },
+	{ cmd: "paplay", args: ["{file}"] },
+	{ cmd: "afplay", args: ["{file}"] },
+	{ cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] },
 ];
 
-let cachedPlayer: Player | undefined;
-
-// Players known to work, cached winner first.
-
-function isExecutable(cmd: string): boolean {
-	if (cmd === "afplay" && process.platform !== "darwin") return false;
-	const delimiter = process.platform === "win32" ? ";" : ":";
-	const names = process.platform === "win32" ? [cmd + ".exe", cmd + ".cmd", cmd + ".bat", cmd] : [cmd];
-	for (const dir of (process.env.PATH ?? "").split(delimiter)) {
-		if (!dir) continue;
-		for (const name of names) {
-			try {
-				accessSync(join(dir, name), constants.X_OK);
-				return true;
-			} catch {
-				// Try the next candidate.
-			}
-		}
-	}
-	return false;
+function buildArgs(player: Player, file: string): string[] {
+	return player.args.map((a) => (a === "{file}" ? file : a));
 }
 
+// Players known to work, cached winner first.
+let cachedPlayer: Player | undefined;
+
 function orderedPlayers(): Player[] {
-	const found = PLAYERS.filter((p) => isExecutable(p.cmd));
-	if (cachedPlayer && found.includes(cachedPlayer)) {
-		return [cachedPlayer, ...found.filter((p) => p !== cachedPlayer)];
+	const available = PLAYERS.filter((p) => !(p.cmd === "afplay" && process.platform !== "darwin"));
+	if (cachedPlayer && available.includes(cachedPlayer)) {
+		return [cachedPlayer, ...available.filter((p) => p !== cachedPlayer)];
 	}
-	return found;
+	return available;
 }
 
 function bell(): void {
@@ -123,7 +108,7 @@ function playWith(player: Player, file: string): Promise<boolean> {
 	return new Promise((resolve) => {
 		let child;
 		try {
-			child = spawn(player.cmd, player.args(file), { stdio: "ignore" });
+			child = spawn(player.cmd, buildArgs(player, file), { stdio: "ignore" });
 		} catch {
 			resolve(false);
 			return;

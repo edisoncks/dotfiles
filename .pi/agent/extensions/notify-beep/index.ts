@@ -179,6 +179,9 @@ export default function (pi: ExtensionAPI) {
 	let lastBeep = -Infinity;
 	let bundledCache: string | undefined;
 	let cachedPlayer: Player | undefined;
+	let isPlaying = false;
+	// True while a playback chain is in-flight. Overlapping beeps are
+	// dropped (notification, not orchestra) to avoid stacking 5×2s chains.
 
 	function bundledSoundFile(): string | null {
 		if (bundledCache !== undefined) return bundledCache;
@@ -247,6 +250,8 @@ export default function (pi: ExtensionAPI) {
 		}
 		// force: bypass debounce entirely and don't touch lastBeep,
 		// so /notify-beep test never eats the next real notification.
+		if (isPlaying) return Promise.resolve();
+		isPlaying = true;
 		return (async () => {
 			try {
 				const file = soundFile();
@@ -266,6 +271,8 @@ export default function (pi: ExtensionAPI) {
 				bell();
 			} catch {
 				bell();
+			} finally {
+				isPlaying = false;
 			}
 		})();
 	}

@@ -18,50 +18,28 @@ function statePath(): string | null {
 	}
 }
 
-// Pure read: never writes, warns, or notifies. Corrupt/missing reads as on.
-function readEnabled(): boolean {
+// Single parse: missing reads as on, corrupt reads as on + flags corrupt.
+// Pure read: never writes, warns, or notifies.
+function loadConfig(): { enabled: boolean; corrupt: boolean } {
 	const path = statePath();
-	if (path === null) return true;
+	if (path === null) return { enabled: true, corrupt: false };
 	try {
-		if (!existsSync(path)) return true;
+		if (!existsSync(path)) return { enabled: true, corrupt: false };
 		let raw: unknown;
 		try {
 			raw = JSON.parse(readFileSync(path, "utf8"));
 		} catch {
-			raw = undefined;
+			return { enabled: true, corrupt: true };
 		}
 		if (typeof raw === "object" && raw !== null) {
 			const enabled = (raw as { enabled?: unknown }).enabled;
-			if (enabled === undefined) return true;
-			if (typeof enabled === "boolean") return enabled;
+			if (enabled === undefined) return { enabled: true, corrupt: false };
+			if (typeof enabled === "boolean") return { enabled, corrupt: false };
 		}
-		return true;
+		return { enabled: true, corrupt: true };
 	} catch {
-		return true;
+		return { enabled: true, corrupt: false };
 	}
-}
-
-function isCorrupt(): boolean {
-	const path = statePath();
-	if (path === null) return false;
-	try {
-		if (!existsSync(path)) return false;
-		const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
-		if (typeof raw === "object" && raw !== null) {
-			const enabled = (raw as { enabled?: unknown }).enabled;
-			if (enabled === undefined || typeof enabled === "boolean") return false;
-		}
-		return true;
-	} catch {
-		return true;
-	}
-}
-
-// Explicit repair, called only where ctx exists. Returns true when healed.
-function repairConfigIfCorrupt(): boolean {
-	if (!isCorrupt()) return false;
-	saveEnabled(true);
-	return true;
 }
 
 function saveEnabled(enabled: boolean): void {
@@ -223,13 +201,17 @@ function beep(): Promise<void> {
 }
 
 export default function (pi: ExtensionAPI) {
-	let enabled = readEnabled();
+	let enabled = loadConfig().enabled;
 
 	pi.on("session_start", (_event, ctx) => {
-		if (repairConfigIfCorrupt()) {
+		const cfg = loadConfig();
+		if (cfg.corrupt) {
+			saveEnabled(true);
 			ctx.ui.notify("[notify-beep] corrupt config reset to default (enabled)", "warning");
+			enabled = true;
+		} else {
+			enabled = cfg.enabled;
 		}
-		enabled = readEnabled();
 	});
 
 	const maybeBeep = (mode: unknown) => {

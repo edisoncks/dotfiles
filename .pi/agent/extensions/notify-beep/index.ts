@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -120,7 +120,7 @@ const PLAY_TIMEOUT_MS = 2000;
 // non-zero exit, not a spawn error, so watch close codes, not just errors.
 function playCmd(cmd: string, args: string[]): Promise<boolean> {
 	return new Promise((resolve) => {
-		let child;
+		let child: ChildProcess | undefined;
 		try {
 			child = spawn(cmd, args, { stdio: "ignore" });
 		} catch {
@@ -155,7 +155,7 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 		}, PLAY_TIMEOUT_MS);
 		try {
 			// Fire-and-forget must not hold the event loop open.
-			(timer as unknown as { unref?: () => void }).unref?.();
+			timer.unref();
 		} catch {
 			// ignore
 		}

@@ -18,7 +18,8 @@ function statePath(): string | null {
 	}
 }
 
-function loadEnabled(): boolean {
+// Pure read: never writes, warns, or notifies. Corrupt/missing reads as on.
+function readEnabled(): boolean {
 	const path = statePath();
 	if (path === null) return true;
 	try {
@@ -27,19 +28,40 @@ function loadEnabled(): boolean {
 		try {
 			raw = JSON.parse(readFileSync(path, "utf8"));
 		} catch {
-		raw = undefined;
+			raw = undefined;
 		}
 		if (typeof raw === "object" && raw !== null) {
 			const enabled = (raw as { enabled?: unknown }).enabled;
 			if (enabled === undefined) return true;
 			if (typeof enabled === "boolean") return enabled;
 		}
-		console.warn("[notify-beep] corrupt config at " + path + ", resetting to default (enabled)");
-		saveEnabled(true);
 		return true;
 	} catch {
 		return true;
 	}
+}
+
+function isCorrupt(): boolean {
+	const path = statePath();
+	if (path === null) return false;
+	try {
+		if (!existsSync(path)) return false;
+		const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
+		if (typeof raw === "object" && raw !== null) {
+			const enabled = (raw as { enabled?: unknown }).enabled;
+			if (enabled === undefined || typeof enabled === "boolean") return false;
+		}
+		return true;
+	} catch {
+		return true;
+	}
+}
+
+// Explicit repair, called only where ctx exists. Returns true when healed.
+function repairConfigIfCorrupt(): boolean {
+	if (!isCorrupt()) return false;
+	saveEnabled(true);
+	return true;
 }
 
 function saveEnabled(enabled: boolean): void {
@@ -50,10 +72,6 @@ function saveEnabled(enabled: boolean): void {
 	} catch {
 		// Persistence must never crash the agent.
 	}
-}
-
-function statusText(enabled: boolean): string {
-	return enabled ? "beep: on" : "beep: off";
 }
 
 const DEBOUNCE_MS = 1500;
@@ -163,7 +181,6 @@ function playCmd(cmd: string, args: string[]): Promise<boolean> {
 	});
 }
 
-// Never rejects: all failures fall through to bell(), which is safe.
 function playWith(player: Player, file: string): Promise<boolean> {
 	return playCmd(player.cmd, buildArgs(player, file));
 }
@@ -183,7 +200,7 @@ function powershellBeep(): Promise<boolean> {
 
 // Never rejects: all failures fall through to bell(), which is safe.
 function beep(): Promise<void> {
-	const now = Date.now();
+	const now = performance.now();
 	if (now - lastBeep < DEBOUNCE_MS) return Promise.resolve();
 	lastBeep = now;
 	return (async () => {
@@ -200,32 +217,33 @@ function beep(): Promise<void> {
 			if (await powershellBeep()) return;
 			bell();
 		} catch {
-			try {
-				bell();
-			} catch {
-				// Notifications must never crash the agent.
-			}
+			bell();
 		}
 	})();
 }
 
 export default function (pi: ExtensionAPI) {
-	let enabled = loadEnabled();
+	let enabled = readEnabled();
 
-	pi.on("session_start", async () => {
-		enabled = loadEnabled();
+	pi.on("session_start", (_event, ctx) => {
+		if (repairConfigIfCorrupt()) {
+			ctx.ui.notify("[notify-beep] corrupt config reset to default (enabled)", "warning");
+		}
+		enabled = readEnabled();
 	});
 
-	pi.on("agent_settled", (_event, ctx) => {
+	const maybeBeep = (mode: unknown) => {
 		if (!enabled) return;
-		if (ctx.mode !== "tui") return;
+		if (mode !== "tui") return;
 		void beep().catch(() => {});
+	};
+
+	pi.on("agent_settled", (_event, ctx) => {
+		maybeBeep(ctx.mode);
 	});
 
 	pi.on("ui_prompt_start", (_event, ctx) => {
-		if (!enabled) return;
-		if (ctx.mode !== "tui") return;
-		void beep().catch(() => {});
+		maybeBeep(ctx.mode);
 	});
 
 	pi.registerCommand("notify-beep", {
@@ -244,7 +262,7 @@ export default function (pi: ExtensionAPI) {
 			} else if (arg === "off") {
 				enabled = false;
 			} else if (arg === "status") {
-				ctx.ui.notify(statusText(enabled), "info");
+				ctx.ui.notify(enabled ? "beep: on" : "beep: off", "info");
 				return;
 			} else {
 				ctx.ui.notify("Usage: /notify-beep [on|off|toggle|status]", "warning");
@@ -252,7 +270,7 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			saveEnabled(enabled);
-			ctx.ui.notify(statusText(enabled), "info");
+			ctx.ui.notify(enabled ? "beep: on" : "beep: off", "info");
 		},
 	});
 }

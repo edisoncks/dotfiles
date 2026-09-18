@@ -7,20 +7,35 @@ import { getAgentDir, type ExtensionAPI } from "@earendil-works/pi-coding-agent"
 const SOUND = fileURLToPath(new URL("./beep.mp3", import.meta.url));
 const STATE_FILE = "notify-beep.json";
 
-function statePath(): string {
+function statePath(): string | null {
 	try {
 		return join(getAgentDir(), STATE_FILE);
 	} catch {
-		return STATE_FILE;
+		// No agent dir: memory-only. Never fall back to a relative
+		// path and litter the user's CWD with state files.
+		return null;
 	}
 }
 
 function loadEnabled(): boolean {
+	const path = statePath();
+	if (path === null) return true;
 	try {
-		const path = statePath();
 		if (!existsSync(path)) return true;
-		const raw = JSON.parse(readFileSync(path, "utf8")) as { enabled?: unknown };
-		return raw.enabled === false ? false : true;
+		let raw: unknown;
+		try {
+			raw = JSON.parse(readFileSync(path, "utf8"));
+		} catch {
+		raw = undefined;
+		}
+		if (typeof raw === "object" && raw !== null) {
+			const enabled = (raw as { enabled?: unknown }).enabled;
+			if (enabled === undefined) return true;
+			if (typeof enabled === "boolean") return enabled;
+		}
+		console.warn("[notify-beep] corrupt config at " + path + ", resetting to default (enabled)");
+		saveEnabled(true);
+		return true;
 	} catch {
 		return true;
 	}
@@ -28,7 +43,9 @@ function loadEnabled(): boolean {
 
 function saveEnabled(enabled: boolean): void {
 	try {
-		writeFileSync(statePath(), JSON.stringify({ enabled }, null, 2));
+		const path = statePath();
+		if (path === null) return;
+		writeFileSync(path, JSON.stringify({ enabled }, null, 2));
 	} catch {
 		// Persistence must never crash the agent.
 	}

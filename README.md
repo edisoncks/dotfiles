@@ -4,8 +4,7 @@
 
 ## 🛠️ Prerequisites
 
-1. [Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/Mononoki)
-2. Increase open file descriptor limit to at least 10240 before running the bootstrap script:
+1. Increase open file descriptor limit to at least 10240 before running the bootstrap script:
 
    ```bash
    ulimit -n 10240
@@ -13,7 +12,9 @@
 
 ## 📥 Getting started
 
-Install packages and create symlinks.
+Install packages and create symlinks. The script also installs the pinned
+[Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts) into
+`~/.local/share/fonts/` and refreshes the font cache.
 
 ```bash
 bash bootstrap.sh

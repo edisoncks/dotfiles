@@ -92,6 +92,32 @@ else
 	exit 1
 fi
 
+# Install Mononoki Nerd Font (pinned; idempotent via version marker)
+# Runs last and uses only stock tools (curl/tar/xz), so a network hiccup
+# cannot block package installation.
+NERD_FONTS_VERSION="v3.5.1"
+FONT_DIR="$HOME/.local/share/fonts"
+FONT_MARKER="$FONT_DIR/.mononoki-nerd-font.version"
+if [ -f "$FONT_MARKER" ] && [ "$(cat "$FONT_MARKER")" = "$NERD_FONTS_VERSION" ]; then
+	echo "✅ Mononoki Nerd Font $NERD_FONTS_VERSION already installed"
+else
+	echo "⌛ Installing Mononoki Nerd Font $NERD_FONTS_VERSION..."
+	mkdir -p "$FONT_DIR"
+	(
+		tmp="$(mktemp -d)"
+		trap 'rm -rf "${tmp:?}"' EXIT
+		curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors \
+			-o "$tmp/Mononoki.tar.xz" \
+			"https://github.com/ryanoasis/nerd-fonts/releases/download/${NERD_FONTS_VERSION}/Mononoki.tar.xz"
+		tar -xJf "$tmp/Mononoki.tar.xz" -C "$FONT_DIR" --wildcards '*.ttf'
+	)
+	printf '%s\n' "$NERD_FONTS_VERSION" >"$FONT_MARKER"
+	if command -v fc-cache >/dev/null 2>&1; then
+		fc-cache -f "$FONT_DIR" >/dev/null
+	fi
+	echo "✅ Installed Mononoki Nerd Font $NERD_FONTS_VERSION into $FONT_DIR"
+fi
+
 # Reminder for the user's interactive shell only; the script itself is self-contained
 # (aliases, mise activate, etc. are loaded by sourcing ~/.bash_profile)
 echo "🚀 Done. Run 'source ~/.bash_profile' in this shell to pick up the new environment immediately (or just open a new terminal)."

@@ -10,8 +10,9 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 - Overlapping playback is dropped (in-flight guard): a beep already playing
   for up to 2 s per player never stacks a second chain.
 - Default is on when no config file exists.
-- Chime cache is warmed in background at `session_start` (zero startup
-  block); the first beep joins the warmup instead of paying sync IO.
+- Chime cache is rendered synchronously at `session_start` (~0.5ms for 14KB,
+  one write) so the first beep never pays render+write cost. Sync on purpose:
+  an async warmup + join state machine costs more than it saves.
 
 ## Sound
 

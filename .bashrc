@@ -67,3 +67,8 @@ export OPENCODE_ENABLE_EXA=1
 
 # Pi
 export PI_SKIP_VERSION_CHECK=1
+
+# fzf
+if command -v fzf >/dev/null 2>&1; then
+  eval "$(fzf --bash)"
+fi

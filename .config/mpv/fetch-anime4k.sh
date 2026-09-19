@@ -22,10 +22,10 @@ curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors -o "$WORK_DIR/Anime4K.zi
 
 if command -v unzip >/dev/null 2>&1; then
 	unzip -o -q -j "$WORK_DIR/Anime4K.zip" '*.glsl' -d "$SHADER_DIR"
-elif command -v 7z >/dev/null 2>&1; then
-	7z x -y -o"$SHADER_DIR" "$WORK_DIR/Anime4K.zip" '*.glsl' >/dev/null
+elif command -v 7zz >/dev/null 2>&1; then
+	7zz x -y -o"$SHADER_DIR" "$WORK_DIR/Anime4K.zip" '*.glsl' >/dev/null
 else
-	echo "❌ Neither unzip nor 7z found (brew install sevenzip) — shaders not installed"
+	echo "❌ Neither unzip nor 7zz found (mise use -g 7zip) — shaders not installed"
 	exit 1
 fi
 

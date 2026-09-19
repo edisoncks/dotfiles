@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
@@ -21,29 +21,35 @@ function statePath(): string | null {
 
 // Single parse: missing reads as on, corrupt reads as on + flags corrupt.
 // Pure read: never writes, warns, or notifies.
+// Why no existsSync: stat-then-read is TOCTOU. Try the read directly;
+// ENOENT means "no config yet" (default on, not corrupt), parse/shape
+// failure means corrupt. Other IO errors fail open without warning.
 function loadConfig(): { enabled: boolean; corrupt: boolean } {
 	const path = statePath();
 	if (path === null) return { enabled: true, corrupt: false };
+	let text: string;
 	try {
-		if (!existsSync(path)) return { enabled: true, corrupt: false };
-		let raw: unknown;
-		try {
-			raw = JSON.parse(readFileSync(path, "utf8"));
-		} catch {
-			return { enabled: true, corrupt: true };
-		}
-		if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
-			return { enabled: true, corrupt: true };
-		}
-		{
-			const enabled = (raw as { enabled?: unknown }).enabled;
-			if (enabled === undefined) return { enabled: true, corrupt: false };
-			if (typeof enabled === "boolean") return { enabled, corrupt: false };
-		}
-		return { enabled: true, corrupt: true };
+		text = readFileSync(path, "utf8");
 	} catch {
+		// Missing file is the normal first-run case, not corruption.
+		// EACCES etc. also fail open silently — never crash on persistence.
 		return { enabled: true, corrupt: false };
 	}
+	let raw: unknown;
+	try {
+		raw = JSON.parse(text);
+	} catch {
+		return { enabled: true, corrupt: true };
+	}
+	if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+		return { enabled: true, corrupt: true };
+	}
+	{
+		const enabled = (raw as { enabled?: unknown }).enabled;
+		if (enabled === undefined) return { enabled: true, corrupt: false };
+		if (typeof enabled === "boolean") return { enabled, corrupt: false };
+	}
+	return { enabled: true, corrupt: true };
 }
 
 function saveEnabled(enabled: boolean): boolean {
@@ -178,15 +184,18 @@ export default function (pi: ExtensionAPI) {
 		const cached = cachedChimePath();
 		if (cached) {
 			try {
-				if (existsSync(cached)) {
+				// Why wx + EEXIST-means-use: creation is authoritative, no
+				// check-then-write race. A pre-existing cache is reused as-is;
+				// a corrupt cache just fails playback and falls back to bell.
+				writeFileSync(cached, renderChime(), { mode: 0o600, flag: "wx" });
+				bundledCache = cached;
+				return cached;
+			} catch (e: unknown) {
+				if ((e as NodeJS.ErrnoException)?.code === "EEXIST") {
 					bundledCache = cached;
 					return cached;
 				}
-				writeFileSync(cached, renderChime(), { mode: 0o600 });
-				bundledCache = cached;
-				return cached;
-			} catch {
-				// Fall through to tmp fallback.
+				// Fall through to tmp fallback (e.g. read-only agent dir).
 			}
 		}
 		// Fallback: single tmp file, no mkdtemp dir leak. PID-suffixed + O_EXCL
@@ -221,16 +230,9 @@ export default function (pi: ExtensionAPI) {
 	function soundFile(): string | null {
 		const override = process.env.NOTIFY_BEEP_SOUND?.trim();
 		if (override) {
-			// Fast-path filter for a typo'd override: skip 5 doomed spawns and
-			// go straight to bell. TOCTOU-safe: worst case the file vanishes
-			// between here and spawn, players fail, we bell anyway.
-			// Player PATH lookup intentionally has no existsSync gate — spawn
-			// exit codes are authoritative, avoiding check-then-spawn races.
-			try {
-				if (!existsSync(override)) return null;
-			} catch {
-				return null;
-			}
+			// Why no existsSync pre-check: it's TOCTOU theater — the file can
+			// vanish between check and spawn anyway. Spawn exit codes are
+			// authoritative; a typo'd override costs 5 fast fails then bell.
 			return override;
 		}
 		return bundledSoundFile();

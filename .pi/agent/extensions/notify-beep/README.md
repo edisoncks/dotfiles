@@ -30,6 +30,8 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
   `$TMPDIR/pi-beep-<pid>.wav` (O_EXCL, unlinked+retried on EEXIST,
   else bell). No `mkdtemp` dir leak. Read-only agent dirs work.
 - Override the sound file with `NOTIFY_BEEP_SOUND=/path/to/file`.
+  No pre-check by design (check-then-spawn is TOCTOU theater — spawn exit
+  codes are authoritative); a typo'd path costs 5 fast fails then bell.
   Long overrides are SIGKILLed after 2 s per player and treated as handled
   (not cached as winner, no cascade through every player).
 - Predictable output: 14156-byte WAV (`CHIME_LEN`), 22050 Hz mono 16-bit

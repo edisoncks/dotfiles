@@ -68,7 +68,9 @@ if command -v opencode >/dev/null 2>&1; then
 fi
 
 # Pi
-export PI_SKIP_VERSION_CHECK=1
+if command -v pi >/dev/null 2>&1; then
+  export PI_SKIP_VERSION_CHECK=1
+fi
 
 # fzf
 if command -v fzf >/dev/null 2>&1; then

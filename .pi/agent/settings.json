@@ -10,18 +10,14 @@
   "enabledModels": [
     "xiaomi/mimo-v2.5",
     "xiaomi/mimo-v2.5-pro",
-    "deepseek/deepseek-v4-flash",
-    "deepseek/deepseek-v4-pro",
-    "ollama/gemma4:26b-a4b-it-qat",
-    "opencode-go/deepseek-v4-flash",
-    "opencode-go/deepseek-v4-pro",
-    "opencode-go/hy3",
+    "deepseek/deepseek-flash",
     "opencode-go/mimo-v2.5",
     "opencode-go/mimo-v2.5-pro",
     "opencode-go/gpt-5.6-luna",
     "opencode-go/glm-5.3-flash",
     "opencode-go/qwen3.8-flash",
-    "opencode-go/muse-spark-1.3-contributor"
+    "opencode-go/muse-spark-1.3-contributor",
+    "opencode-go/deepseek-v4.1-flash"
   ],
   "hideThinkingBlock": true,
   "packages": [

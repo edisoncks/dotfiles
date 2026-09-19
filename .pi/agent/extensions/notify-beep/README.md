@@ -26,9 +26,10 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
   (`pwsh` → `powershell`), then the terminal bell. Elsewhere falls back
   directly to the terminal bell.
 - Chime is generated, never written next to source — cached as
-  `<agent-dir>/notify-beep-chime.wav` with a single-file tmp fallback
-  `$TMPDIR/pi-beep-<pid>.wav` (O_EXCL, unlinked+retried on EEXIST,
-  else bell). No `mkdtemp` dir leak. Read-only agent dirs work.
+  `<agent-dir>/notify-beep-chime.wav` (atomic `wx` create, `EEXIST` reuses
+  existing) with a private `mkdtemp` tmp-dir fallback (`$TMPDIR/pi-beep-XXX/
+  chime.wav`, `0o600`, cleaned on process exit, never unlinking strangers).
+  Read-only agent dirs work via tmp.
 - Override the sound file with `NOTIFY_BEEP_SOUND=/path/to/file`.
   No pre-check by design (check-then-spawn is TOCTOU theater — spawn exit
   codes are authoritative); a typo'd path costs 5 fast fails then bell.

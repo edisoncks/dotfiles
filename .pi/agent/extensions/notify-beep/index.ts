@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { performance } from "node:perf_hooks";
@@ -198,32 +198,35 @@ export default function (pi: ExtensionAPI) {
 				// Fall through to tmp fallback (e.g. read-only agent dir).
 			}
 		}
-		// Fallback: single tmp file, no mkdtemp dir leak. PID-suffixed + O_EXCL
-		// (wx) so creation is authoritative: no check-then-use race, no
-		// symlink clobber. EEXIST means stale PID-reuse or a squatter —
-		// unlink once and retry, else bell (never trust an unknown file).
-		const tmpFile = join(tmpdir(), `pi-beep-${process.pid}.wav`);
+		// Fallback: private mkdtemp dir + fixed name. Why mkdtemp, not a
+		// predictable $TMPDIR/pi-beep-<pid>.wav: predictable names are
+		// symlink-squatter targets. Why never unlink-on-EEXIST: never delete
+		// a file you didn't create — fail to bell instead. Why 0o600 + exit
+		// cleanup: tmp is world-shared, keep private and leave no leak.
+		// Accepted: reload-while-alive leaks one dir until process exit
+		// (avoids module-global cross-reload tracking).
 		try {
+			const dir = mkdtempSync(join(tmpdir(), "pi-beep-"));
+			const tmpFile = join(dir, "chime.wav");
 			writeFileSync(tmpFile, renderChime(), { mode: 0o600, flag: "wx" });
 			bundledCache = tmpFile;
+			// Best-effort cleanup on normal exit; crash/kill may still leave
+			// one tmp dir for the OS to reap — better than unlinking strangers.
+			try {
+				process.on("exit", () => {
+					try {
+						rmSync(dir, { recursive: true, force: true });
+					} catch {
+						// ignore — tmp reap is best-effort, never crash the agent.
+					}
+				});
+			} catch {
+				// ignore — leak one tmp dir rather than crash.
+			}
 			return tmpFile;
-		} catch (e: unknown) {
-			if ((e as NodeJS.ErrnoException)?.code !== "EEXIST") {
-				// No cache on failure: retry next beep instead of bell-forever.
-				return null;
-			}
-			try {
-				unlinkSync(tmpFile);
-			} catch {
-				return null;
-			}
-			try {
-				writeFileSync(tmpFile, renderChime(), { mode: 0o600, flag: "wx" });
-				bundledCache = tmpFile;
-				return tmpFile;
-			} catch {
-				return null;
-			}
+		} catch {
+			// No cache on failure: retry next beep instead of bell-forever.
+			return null;
 		}
 	}
 

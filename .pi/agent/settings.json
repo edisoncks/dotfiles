@@ -24,7 +24,9 @@
     "npm:@narumitw/pi-btw",
     "npm:@narumitw/pi-statusline",
     "npm:pi-cc-header",
-    "git:github.com/edisoncks/pi-notify-beep@v1.0.0"
+    "git:github.com/edisoncks/pi-notify-beep@v1.0.0",
+    "git:github.com/edisoncks/pi-web-search@v1.0.0",
+    "git:github.com/edisoncks/pi-plan-mode@v1.0.0"
   ],
   "editorPaddingX": 1,
   "quietStartup": true,

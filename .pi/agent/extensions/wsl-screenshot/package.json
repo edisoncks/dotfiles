@@ -1,9 +1,0 @@
-{
-  "name": "wsl-screenshot",
-  "private": true,
-  "dependencies": {
-    "@earendil-works/pi-coding-agent": "^0.84.2",
-    "@earendil-works/pi-ai": "^0.84.2",
-    "typebox": "^1.3.16"
-  }
-}

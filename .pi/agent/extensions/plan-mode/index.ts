@@ -26,7 +26,8 @@
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-const PLAN_PROMPT = `Enter PLAN MODE (Plan → Revise → Review → Approve → Implementation) now and don't exit PLAN MODE until the plan is APPROVED or CANCELED.
+const PLAN_PROMPT = `Enter PLAN MODE (Plan → Revise → Review → Approve → Implement) now and don't exit PLAN MODE until the plan is APPROVED or CANCELED.
+Do extensive discovery and verification before creating a detailed plan.
 
 ---
 
@@ -42,7 +43,8 @@ function extractTask(text: string): string {
 
 export default function (pi: ExtensionAPI) {
   pi.registerCommand("plan", {
-    description: "Enter PLAN MODE (Plan → Revise → Review → Approve → Implementation)",
+    description:
+      "Enter PLAN MODE (Plan → Revise → Review → Approve → Implement)",
     handler: async (args, ctx) => {
       // Strip leading whitespace (spaces, tabs, \r\n, \n)
       const task = (args || "").replace(/^\s+/, "");

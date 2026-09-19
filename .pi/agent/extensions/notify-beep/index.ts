@@ -9,6 +9,19 @@ import { renderChime } from "./chime.js";
 const STATE_FILE = "notify-beep.json";
 const CHIME_FILE = "notify-beep-chime.wav";
 
+// SSH detection: OpenSSH sets SSH_CLIENT + SSH_CONNECTION on every ssh
+// session, SSH_TTY when a tty is allocated. Any one means "remote".
+// Why bell over ssh: remote file players play where nobody hears (exit 0
+// eats the bell that would have reached the local emulator — bell is just
+// bytes over the wire). Explicit NOTIFY_BEEP_SOUND still wins.
+function isSshSession(): boolean {
+	return Boolean(process.env.SSH_CLIENT || process.env.SSH_TTY || process.env.SSH_CONNECTION);
+}
+
+function hasSoundOverride(): boolean {
+	return Boolean(process.env.NOTIFY_BEEP_SOUND?.trim());
+}
+
 function statePath(): string | null {
 	try {
 		return join(getAgentDir(), STATE_FILE);
@@ -274,6 +287,13 @@ export default function (pi: ExtensionAPI) {
 		isPlaying = true;
 		return (async () => {
 			try {
+				// Over ssh with no override: a remote wav would play unheard
+				// and suppress the bell that reaches the user. Bell directly.
+				// Lazy cache still covers a late-exported override.
+				if (isSshSession() && !hasSoundOverride()) {
+					bell();
+					return;
+				}
 				const file = soundFile();
 				if (file) {
 					for (const player of orderedPlayers()) {
@@ -311,7 +331,11 @@ export default function (pi: ExtensionAPI) {
 		}
 		// Sync cache warmup: ~0.5ms once per session, so the first beep never
 		// pays render+write cost. Never throws, never blocks meaningfully.
-		ensureChimeSync();
+		// Skipped over ssh with no override: we'd never play the file, so
+		// don't litter the remote box (lazy creation covers a late override).
+		if (!isSshSession() || hasSoundOverride()) {
+			ensureChimeSync();
+		}
 	});
 
 	const maybeBeep = (mode: unknown) => {

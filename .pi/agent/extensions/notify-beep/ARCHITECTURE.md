@@ -25,6 +25,13 @@ This file summarizes them — if it disagrees with code, code wins.
 - `NOTIFY_BEEP_SOUND` override is passed straight to players with no
   `existsSync` pre-check: check-then-spawn is TOCTOU theater (the file can
   vanish between check and spawn). A typo costs 5 fast fails, then bell.
+- Over ssh (`SSH_CLIENT`/`SSH_TTY`/`SSH_CONNECTION`, see `isSshSession`)
+  with no override, `beep()` bells directly and `session_start` skips cache
+  warmup: a remote `ok` would play where nobody hears and suppress the bell
+  that reaches the local emulator, plus litter the remote box. An explicit
+  override bypasses this (user knows about audio forwarding); lazy cache
+  creation covers an override exported mid-session. `test` follows the same
+  path so it demonstrates what a real notification does.
 
 ## Caching + tmp fallback (`bundledSoundFile`, `ensureChimeSync`)
 

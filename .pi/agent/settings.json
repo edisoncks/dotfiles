@@ -41,5 +41,8 @@
     "disabled": false
   },
   "tuiMode": "regular",
-  "fullscreenScrollbar": "auto"
+  "fullscreenScrollbar": "auto",
+  "showCacheMissNotices": true,
+  "collapseChangelog": true,
+  "doubleEscapeAction": "tree"
 }

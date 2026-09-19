@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
 import { access as accessAsync, writeFile as writeFileAsync } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -99,17 +99,13 @@ type PlayResult = "ok" | "fail" | "timeout";
 
 // Runs cmd. ok = clean exit 0, fail = spawn error / non-zero exit,
 // timeout = SIGKILLed after 2s (assume 2s audible was heard).
+// Why no sync try/catch around spawn: a missing binary reports as an async
+// "error" (ENOENT), not a sync throw — the "error" event is authoritative.
 // A missing server (e.g. pw-play with PipeWire down) surfaces as a
 // non-zero exit, not a spawn error, so watch close codes, not just errors.
 function playCmd(cmd: string, args: string[]): Promise<PlayResult> {
 	return new Promise((resolve) => {
-		let child: ChildProcess | undefined;
-		try {
-			child = spawn(cmd, args, { stdio: "ignore" });
-		} catch {
-			resolve("fail");
-			return;
-		}
+		const child = spawn(cmd, args, { stdio: "ignore" });
 		let settled = false;
 		const done = (result: PlayResult) => {
 			if (settled) return;
@@ -125,30 +121,20 @@ function playCmd(cmd: string, args: string[]): Promise<PlayResult> {
 			if (settled) return;
 			settled = true;
 			try {
+				// Signaling a just-exited pid can throw; timeout still counts
+				// as handled and this promise must never reject (fire-and-forget).
 				child.kill("SIGKILL");
 			} catch {
 				// ignore
 			}
-			try {
-				child.unref();
-			} catch {
-				// ignore
-			}
+			child.unref();
 			resolve("timeout");
 		}, PLAY_TIMEOUT_MS);
-		try {
-			// Fire-and-forget must not hold the event loop open.
-			timer.unref();
-		} catch {
-			// ignore
-		}
+		// Fire-and-forget must not hold the event loop open.
+		timer.unref();
 		child.on("error", () => done("fail"));
 		child.on("close", (code) => done(code === 0 ? "ok" : "fail"));
-		try {
-			child.unref();
-		} catch {
-			// ignore
-		}
+		child.unref();
 	});
 }
 

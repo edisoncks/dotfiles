@@ -1,33 +1,18 @@
 #!/bin/bash
 set -euo pipefail
 
-# Ensure homebrew is installed
-if command -v brew >/dev/null 2>&1; then
-	echo "✅ Homebrew is installed"
+# Custom mise install path, default to ~/.local/bin/mise
+MISE_INSTALL_PATH="${MISE_INSTALL_PATH:-$HOME/.local/bin/mise}"
+
+# Ensure mise is installed
+if [ -x "$MISE_INSTALL_PATH" ]; then
+	echo "✅ mise is installed"
 else
-	echo "⌛ Installing homebrew..."
-	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	echo "⏳ Installing mise..."
+	curl -fsSL https://mise.run | sh
 fi
 
-# Ensure homebrew binary is in PATH (a fresh install isn't on this shell's PATH yet)
-HOMEBREW_PREFIX="${HOMEBREW_PREFIX:-/home/linuxbrew/.linuxbrew}"
-case ":$PATH:" in
-	*":$HOMEBREW_PREFIX/bin:"*) ;;
-	*) export PATH="$PATH:$HOMEBREW_PREFIX/bin" ;;
-esac
-case ":$PATH:" in
-	*":$HOMEBREW_PREFIX/sbin:"*) ;;
-	*) export PATH="$PATH:$HOMEBREW_PREFIX/sbin" ;;
-esac
-export HOMEBREW_NO_ASK=1
-export HOMEBREW_NO_ANALYTICS=1
-
-if ! command -v brew >/dev/null 2>&1; then
-	echo "❌ Homebrew installation failed"
-	exit 1
-fi
-
-# Create symlinks
+# Symlink dotfiles
 DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 declare -a DOTFILES=(
 	".bashrc.d"
@@ -65,19 +50,15 @@ for i in "${DOTFILES[@]}"; do
 	echo "✅ Created symlinks for ~/$i"
 done
 
+# Install mise packages
+"$MISE_INSTALL_PATH" install
+echo "✅ Installed mise packages"
+
+# Activate mise
+eval "$($MISE_INSTALL_PATH activate bash)"
+
 # Fetch Anime4K shaders (ignored, not vendored)
 "$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
-
-# Install homebrew packages
-brew bundle --file="$DIR/Brewfile"
-# -full variants required for yazi previews (see Brewfile); --overwrite needed
-# because Homebrew's default ffmpeg/imagemagick kegs conflict on link
-brew link ffmpeg-full imagemagick-full -f --overwrite
-echo "✅ Installed homebrew packages"
-
-# Install mise packages
-mise install
-echo "✅ Installed mise packages"
 
 # Install npm deps for bundled pi extensions (lockfiles tracked, node_modules ignored)
 if command -v npm >/dev/null 2>&1; then

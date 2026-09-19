@@ -1,35 +1,3 @@
 {
-  "providers": {
-    "ollama": {
-      "baseUrl": "http://localhost:11434/v1",
-      "api": "openai-completions",
-      "apiKey": "ollama",
-      "compat": {
-        "supportsDeveloperRole": false,
-        "supportsReasoningEffort": true
-      },
-      "models": [
-        {
-          "id": "gemma4:26b-a4b-it-qat",
-          "name": "Gemma 4 26B",
-          "reasoning": true,
-          "input": ["text", "image"],
-          "contextWindow": 256000,
-          "maxTokens": 32000,
-          "samplingParams": {
-            "temperature": 1.0
-          },
-          "thinkingLevelMap": {
-            "off": null,
-            "minimal": null,
-            "low": "low",
-            "medium": "medium",
-            "high": "high",
-            "xhigh": null,
-            "max": null
-          }
-        }
-      ]
-    }
-  }
+  "providers": {}
 }

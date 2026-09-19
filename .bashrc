@@ -63,7 +63,9 @@ fi
 export EDITOR
 
 # OpenCode
-export OPENCODE_ENABLE_EXA=1
+if command -v opencode >/dev/null 2>&1; then
+  export OPENCODE_ENABLE_EXA=1
+fi
 
 # Pi
 export PI_SKIP_VERSION_CHECK=1

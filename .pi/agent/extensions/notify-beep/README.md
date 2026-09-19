@@ -31,9 +31,10 @@ A Pi extension that plays a short chime when the agent finishes or needs input. 
 - Override the sound file with `NOTIFY_BEEP_SOUND=/path/to/file`.
   Long overrides are SIGKILLed after 2 s per player and treated as handled
   (not cached as winner, no cascade through every player).
-- Deterministic bytes: 14156-byte WAV, sha256
-  `61ea4ba9…8945a` (see `CHIME_SHA256` in `chime.ts`). Explicit LE writes —
-  same file on LE/BE, all OSes. Playback timbre still varies by audio stack.
+- Predictable output: 14156-byte WAV (`CHIME_LEN`), 22050 Hz mono 16-bit
+  (see `chime.ts`). Explicit LE writes — same file on LE/BE, all OSes.
+  Assert header/frames/peak in tests, not a hash: 1-LSB `Math.sin` drift
+  across V8 is inaudible. Playback timbre still varies by audio stack.
 - Windows note: `mpv` file playback is expected to cover `mpv.exe`, but
   needs a real Windows box to verify PATHEXT/`spawn` resolution. Bell
   fallback stays `stderr \x07`.

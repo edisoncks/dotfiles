@@ -13,18 +13,20 @@ This file summarizes them — if it disagrees with code, code wins.
 
 ## Audio chain (`playCmd`, `orderedPlayers`, `powershellBeep`)
 
-- Try order: `pw-play` → `paplay` → `aplay` → `afplay` (macOS only) → `mpv`,
-  then PowerShell on Windows, then bell. First `ok` (exit 0) wins and is
-  cached as `cachedPlayer` for next time.
+- Per-OS try order (`PLAYERS_BY_OS` via `basePlayers` in `index.ts`):
+  Linux/default `pw-play` → `paplay` → `aplay` → `mpv`; macOS `afplay` →
+  `mpv`; Windows `mpv.exe`, then PowerShell on Windows, then bell. First
+  `ok` (exit 0) wins and is cached by cmd string (`cachedCmd`) for next
+  time. Tables are frozen; platform policy lives in `isWindows()` +
+  `basePlayers(), not scattered `process.platform` checks.
 - Spawn exit codes are authoritative. A missing binary reports as async
   `error` (ENOENT), not a sync throw — hence no `try/catch` around `spawn`.
   A broken-but-installed server (e.g. `pw-play` with PipeWire down) exits
   non-zero, so close codes are watched, not just `error` events.
-- `mpv` is expected to cover `mpv.exe` on Windows, but PATHEXT/`spawn`
-  resolution there still needs a real Windows box to verify.
+- Windows uses explicit `mpv.exe` (no PATHEXT reliance); `mpv` stays Unix-only.
 - `NOTIFY_BEEP_SOUND` override is passed straight to players with no
   `existsSync` pre-check: check-then-spawn is TOCTOU theater (the file can
-  vanish between check and spawn). A typo costs 5 fast fails, then bell.
+  vanish between check and spawn). A typo costs one fast fail per OS player, then bell.
 - Over ssh (`SSH_CLIENT`/`SSH_TTY`/`SSH_CONNECTION`, see `isSshSession`)
   with no override, `beep()` bells directly and `session_start` skips cache
   warmup: a remote `ok` would play where nobody hears and suppress the bell

@@ -91,17 +91,38 @@ function cachedChimePath(): string | null {
 }
 
 type Player = {
-	cmd: string;
-	args: string[];
+	readonly cmd: string;
+	readonly args: readonly string[];
 };
 
-const PLAYERS: Player[] = [
-	{ cmd: "pw-play", args: ["{file}"] },
-	{ cmd: "paplay", args: ["{file}"] },
-	{ cmd: "aplay", args: ["-q", "{file}"] },
-	{ cmd: "afplay", args: ["{file}"] },
-	{ cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] },
-];
+function isWindows(): boolean {
+	return process.platform === "win32";
+}
+
+// Per-OS player lists: a missing binary fails fast (~ms), but skipping
+// irrelevant spawns still cuts first-beep latency and process spam.
+// Frozen: basePlayers() returns live refs, callers must not mutate.
+// Winner is cached by cmd string (see cachedCmd), never by object
+// identity, so these entries can be inlined without shared instances.
+const PLAYERS_BY_OS: Record<"darwin" | "win32" | "default", readonly Player[]> = {
+	darwin: Object.freeze([{ cmd: "afplay", args: ["{file}"] }, { cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] }]),
+	win32: Object.freeze([{ cmd: "mpv.exe", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] }]),
+	default: Object.freeze([
+		{ cmd: "pw-play", args: ["{file}"] },
+		{ cmd: "paplay", args: ["{file}"] },
+		{ cmd: "aplay", args: ["-q", "{file}"] },
+		{ cmd: "mpv", args: ["--no-video", "--really-quiet", "--no-terminal", "{file}"] },
+	]),
+};
+Object.freeze(PLAYERS_BY_OS);
+
+// Default covers linux + BSDs and any unknown unix: Pulse/PipeWire/ALSA
+// names are portable enough there, mpv is the universal fallback.
+function basePlayers(): readonly Player[] {
+	if (process.platform === "darwin") return PLAYERS_BY_OS.darwin;
+	if (isWindows()) return PLAYERS_BY_OS.win32;
+	return PLAYERS_BY_OS.default;
+}
 
 function bell(): void {
 	try {
@@ -164,10 +185,10 @@ function playWith(player: Player, file: string): Promise<PlayResult> {
 }
 
 // Win32-only fallback after file players, before the terminal bell.
-// mpv.exe already covers Windows file playback; this is for boxes
+// mpv.exe is the file player; this is last-resort synth for boxes
 // with no player at all. Single command string, no quoting builder.
 function powershellBeep(): Promise<boolean> {
-	if (process.platform !== "win32") return Promise.resolve(false);
+	if (!isWindows()) return Promise.resolve(false);
 	const args = ["-NoProfile", "-NonInteractive", "-Command", "[console]::beep(392,120); [console]::beep(523,180)"];
 	return (async () => {
 		// ok or timeout both count as handled (2s was heard); only fail tries next.
@@ -185,10 +206,10 @@ export default function (pi: ExtensionAPI) {
 	// no stale winner/cache across extension reloads.
 	let lastBeep = -Infinity;
 	let bundledCache: string | undefined;
-	let cachedPlayer: Player | undefined;
+	let cachedCmd: string | undefined;
 	let isPlaying = false;
 	// True while a playback chain is in-flight. Overlapping beeps are
-	// dropped (notification, not orchestra) to avoid stacking 5×2s chains.
+	// dropped (notification, not orchestra) to avoid stacking N×2s per-OS chains.
 
 	function bundledSoundFile(): string | null {
 		if (bundledCache !== undefined) return bundledCache;
@@ -248,16 +269,17 @@ export default function (pi: ExtensionAPI) {
 		if (override) {
 			// Why no existsSync pre-check: it's TOCTOU theater — the file can
 			// vanish between check and spawn anyway. Spawn exit codes are
-			// authoritative; a typo'd override costs 5 fast fails then bell.
+			// authoritative; a typo'd override costs one fast fail per OS player then bell.
 			return override;
 		}
 		return bundledSoundFile();
 	}
 
-	function orderedPlayers(): Player[] {
-		const available = PLAYERS.filter((p) => !(p.cmd === "afplay" && process.platform !== "darwin"));
-		if (cachedPlayer && available.includes(cachedPlayer)) {
-			return [cachedPlayer, ...available.filter((p) => p !== cachedPlayer)];
+	function orderedPlayers(): readonly Player[] {
+		const available = basePlayers();
+		if (cachedCmd !== undefined) {
+			const hit = available.find((p) => p.cmd === cachedCmd);
+			if (hit) return [hit, ...available.filter((p) => p !== hit)];
 		}
 		return available;
 	}
@@ -299,7 +321,7 @@ export default function (pi: ExtensionAPI) {
 					for (const player of orderedPlayers()) {
 						const result = await playWith(player, file);
 						if (result === "ok") {
-							cachedPlayer = player;
+							cachedCmd = player.cmd;
 							return;
 						}
 						// timeout: 2s heard so stop cascading, but don't cache

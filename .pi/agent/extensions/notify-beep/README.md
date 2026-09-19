@@ -15,8 +15,9 @@ See `ARCHITECTURE.md` for design rationale.
 ## Sound
 
 - Two-tone chime (`G4 → C5`), cached in the agent dir, played via the first
-  working player: `pw-play` → `paplay` → `aplay` → `afplay` (macOS) → `mpv`,
-  then PowerShell on Windows, then the terminal bell.
+  working player for your OS (Linux: `pw-play` → `paplay` → `aplay` → `mpv`;
+  macOS: `afplay` → `mpv`; Windows: `mpv.exe`), then PowerShell on Windows,
+  then the terminal bell.
 - Override the sound file with `NOTIFY_BEEP_SOUND=/path/to/file`.
 - Over ssh, audio players are skipped and the terminal bell is used (it travels
   over ssh); set `NOTIFY_BEEP_SOUND` to force file playback.

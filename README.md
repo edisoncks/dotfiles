@@ -22,7 +22,7 @@ source ~/.bash_profile
 
 1. Symlinks dotfiles into `$HOME` (existing files are backed up to `*.bak.<timestamp>`).
 2. Runs `mise install` using `.config/mise/config.toml`.
-3. Activates mise, then fetches Anime4K shaders for mpv (warn-only on failure).
+3. Activates mise, then fetches Anime4K shaders for mpv (skipped when already present; warn-only on failure).
 4. Runs `npm ci` for each bundled extension in `.pi/agent/extensions/`.
 5. Installs the pinned [Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts)
    (`v3.5.1`) into `~/.local/share/fonts/` (skipped when already installed).

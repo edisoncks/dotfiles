@@ -60,19 +60,6 @@ eval "$($MISE_INSTALL_PATH activate bash)"
 # Fetch Anime4K shaders (ignored, not vendored)
 "$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
 
-# Install npm deps for bundled pi extensions (lockfiles tracked, node_modules ignored)
-if command -v npm >/dev/null 2>&1; then
-	for ext in "$DIR/.pi/agent/extensions/"*/; do
-		if [ -f "$ext/package.json" ] && [ -f "$ext/package-lock.json" ]; then
-			echo "⌛ Installing npm deps in $ext..."
-			(cd "$ext" && npm ci --no-audit --no-fund)
-		fi
-	done
-else
-	echo "❌ npm not found — cannot install pi extension deps" >&2
-	exit 1
-fi
-
 # Install Mononoki Nerd Font (pinned; idempotent via version marker)
 # Runs last and uses only stock tools (curl/tar/xz), so a network hiccup
 # cannot block package installation.

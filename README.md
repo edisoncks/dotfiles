@@ -24,7 +24,8 @@ source ~/.bash_profile
 2. Runs `mise install` using `.config/mise/config.toml`.
 3. Activates mise, then fetches Anime4K shaders for mpv (skipped when already present; warn-only on failure).
 4. Installs the pinned [Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts)
-   (`v3.5.1`) into `~/.local/share/fonts/` (skipped when already installed).
+   (`v3.5.1`) and [Maple Mono NF CN](https://github.com/subframe7536/Maple-font)
+   (`v7.9`, unhinted) into `~/.local/share/fonts/` (each skipped when already installed).
 
 ## 🧰 Tooling
 

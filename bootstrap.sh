@@ -61,11 +61,14 @@ eval "$($MISE_INSTALL_PATH activate bash)"
 # Fetch Anime4K shaders (ignored, not vendored)
 "$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
 
-# Install Mononoki Nerd Font (pinned; idempotent via version marker)
-# Runs last and uses only stock tools (curl/tar/xz), so a network hiccup
-# cannot block package installation.
+# Install fonts (pinned; idempotent via per-font version markers)
+# Runs last, after mise packages are installed, so 7zz (mise-managed 7zip) is
+# available and a network hiccup cannot block package installation.
 NERD_FONTS_VERSION="v3.5.1"
+MAPLE_FONT_VERSION="v7.9"
 FONT_DIR="$HOME/.local/share/fonts"
+
+# Mononoki Nerd Font
 FONT_MARKER="$FONT_DIR/.mononoki-nerd-font.version"
 if [ -f "$FONT_MARKER" ] && [ "$(cat "$FONT_MARKER")" = "$NERD_FONTS_VERSION" ]; then
 	echo "✅ Mononoki Nerd Font $NERD_FONTS_VERSION already installed"
@@ -85,6 +88,37 @@ else
 		fc-cache -f "$FONT_DIR" >/dev/null
 	fi
 	echo "✅ Installed Mononoki Nerd Font $NERD_FONTS_VERSION into $FONT_DIR"
+fi
+
+# Maple Mono NF CN (unhinted)
+MAPLE_FONT_MARKER="$FONT_DIR/.maple-mono-nf-cn.version"
+if [ -f "$MAPLE_FONT_MARKER" ] && [ "$(cat "$MAPLE_FONT_MARKER")" = "$MAPLE_FONT_VERSION" ]; then
+	echo "✅ Maple Mono NF CN $MAPLE_FONT_VERSION already installed"
+else
+	echo "⌛ Installing Maple Mono NF CN $MAPLE_FONT_VERSION..."
+	mkdir -p "$FONT_DIR"
+	(
+		tmp="$(mktemp -d)"
+		trap 'rm -rf "${tmp:?}"' EXIT
+		curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors \
+			-o "$tmp/MapleMono-NF-CN-unhinted.zip" \
+			"https://github.com/subframe7536/maple-font/releases/download/${MAPLE_FONT_VERSION}/MapleMono-NF-CN-unhinted.zip"
+		if command -v 7zz >/dev/null 2>&1; then
+			7zz x -y -o"$FONT_DIR" "$tmp/MapleMono-NF-CN-unhinted.zip" '*.ttf' >/dev/null
+		elif command -v unzip >/dev/null 2>&1; then
+			unzip -q -o "$tmp/MapleMono-NF-CN-unhinted.zip" -d "$FONT_DIR" '*.ttf'
+		elif command -v 7z >/dev/null 2>&1; then
+			7z x -y -o"$FONT_DIR" "$tmp/MapleMono-NF-CN-unhinted.zip" '*.ttf' >/dev/null
+		else
+			echo "❌ 7zip or unzip is required to install Maple Mono NF CN" >&2
+			exit 1
+		fi
+	)
+	printf '%s\n' "$MAPLE_FONT_VERSION" >"$MAPLE_FONT_MARKER"
+	if command -v fc-cache >/dev/null 2>&1; then
+		fc-cache -f "$FONT_DIR" >/dev/null
+	fi
+	echo "✅ Installed Maple Mono NF CN $MAPLE_FONT_VERSION into $FONT_DIR"
 fi
 
 # Reminder for the user's interactive shell only; the script itself is self-contained

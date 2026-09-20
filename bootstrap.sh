@@ -47,7 +47,7 @@ for i in "${DOTFILES[@]}"; do
 		mv "$HOME/$i" "$backup"
 		echo "🗂️  Backed up ~/$i to $backup"
 	fi
-	ln -sf "$DOTFILE" "$HOME/$i"
+	ln -sfn "$DOTFILE" "$HOME/$i"
 	echo "✅ Created symlinks for ~/$i"
 done
 

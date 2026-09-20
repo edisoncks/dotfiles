@@ -1,8 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
-# Custom mise install path, default to ~/.local/bin/mise
-MISE_INSTALL_PATH="${MISE_INSTALL_PATH:-$HOME/.local/bin/mise}"
+# Custom mise install path, default to ~/.local/bin/mise.
+# Exported so the mise installer (curl | sh) honors the override.
+export MISE_INSTALL_PATH="${MISE_INSTALL_PATH:-$HOME/.local/bin/mise}"
 
 # Ensure mise is installed
 if [ -x "$MISE_INSTALL_PATH" ]; then

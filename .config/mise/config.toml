@@ -37,3 +37,6 @@ topgrade = "latest"
 uv = "latest"
 yazi = "latest"
 zoxide = "latest"
+
+[settings]
+auto_update = true

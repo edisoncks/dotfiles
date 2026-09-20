@@ -1,6 +1,7 @@
 [tools]
 7zip = "latest"
 "aqua:ViRb3/wgcf" = "latest"
+aws-cli = { version = "latest", symlink_bins = "true" }
 bat = "latest"
 btop = "latest"
 bun = "latest"

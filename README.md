@@ -1,6 +1,6 @@
 # 🗃️ edisoncks's dotfiles
 
-![Platform](https://img.shields.io/badge/platform-Linux-blue?logo=archlinux) ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/edisoncks/dotfiles/main?logo=github)
+![Platform](https://img.shields.io/badge/platform-Linux-blue?logo=archlinux) ![Shell](https://img.shields.io/badge/shell-bash-4EAA25?logo=gnubash&logoColor=white) ![Editor](https://img.shields.io/badge/editor-Neovim-57A143?logo=neovim&logoColor=white) ![Terminal](https://img.shields.io/badge/terminal-Ghostty-292C33?logo=ghostty&logoColor=white) ![Managed with mise](https://img.shields.io/badge/tools-mise-a78bfa) ![Dotfiles](https://img.shields.io/badge/dotfiles-managed-blueviolet)
 
 ## 🛠️ Prerequisites
 

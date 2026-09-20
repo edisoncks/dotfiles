@@ -13,6 +13,7 @@ fd = "latest"
 ffmpeg = "latest"
 fzf = "latest"
 gh = "latest"
+"github:h4ckf0r0day/obscura" = { version = "latest", asset_pattern = "obscura-x86_64-linux-stealth.tar.gz" }
 "github:mikeleppane/envx" = "latest"
 "github:rgwood/systemctl-tui" = "latest"
 imagemagick = "latest"

@@ -6,11 +6,16 @@ set -euo pipefail
 export MISE_INSTALL_PATH="${MISE_INSTALL_PATH:-$HOME/.local/bin/mise}"
 
 # Ensure mise is installed
-if [ -x "$MISE_INSTALL_PATH" ]; then
+mise_ready() { [ -x "$MISE_INSTALL_PATH" ]; }
+if mise_ready; then
 	echo "✅ mise is installed"
 else
 	echo "⏳ Installing mise..."
 	curl -fsSL https://mise.run | sh
+fi
+if ! mise_ready; then
+	echo "❌ mise installation failed: $MISE_INSTALL_PATH is missing or not executable." >&2
+	exit 1
 fi
 
 # Symlink dotfiles

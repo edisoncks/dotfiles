@@ -56,9 +56,9 @@ for i in "${DOTFILES[@]}"; do
 	echo "✅ Created symlinks for ~/$i"
 done
 
-# Install mise packages
+# Install mise tools
 "$MISE_INSTALL_PATH" install
-echo "✅ Installed mise packages"
+echo "✅ Installed mise tools"
 
 # Activate mise
 eval "$($MISE_INSTALL_PATH activate bash)"
@@ -67,7 +67,7 @@ eval "$($MISE_INSTALL_PATH activate bash)"
 "$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
 
 # Install fonts (pinned; idempotent via per-font version markers)
-# Runs last, after mise packages are installed, so 7zz (mise-managed 7zip) is
+# Runs last, after mise tools are installed, so 7zz (mise-managed 7zip) is
 # available and a network hiccup cannot block package installation.
 NERD_FONTS_VERSION="v3.5.1"
 MAPLE_FONT_VERSION="v7.9"

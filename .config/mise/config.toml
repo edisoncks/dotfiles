@@ -16,6 +16,7 @@ gh = "latest"
 "github:h4ckf0r0day/obscura" = { version = "latest", asset_pattern = "obscura-x86_64-linux-stealth.tar.gz" }
 "github:iOfficeAI/OfficeCLI" = "latest"
 "github:mikeleppane/envx" = "latest"
+"github:pkgforge-dev/ghostty-appimage" = { version = "latest", asset_pattern = "Ghostty-{{ version }}-x86_64.AppImage", bin = "ghostty" }
 "github:rgwood/systemctl-tui" = "latest"
 imagemagick = "latest"
 jq = "latest"

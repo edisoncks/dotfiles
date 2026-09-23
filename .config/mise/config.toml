@@ -25,7 +25,7 @@ mpv = "latest"
 neovim = "latest"
 node = "26"
 "npm:@agegr/pi-web" = "latest"
-"npm:@earendil-works/pi-coding-agent" = "latest"
+"npm:@earendil-works/pi-coding-agent" = { version = "latest", minimum_release_age = "6h" }
 "npm:@mermaid-js/mermaid-cli" = "latest"
 "npm:prettier" = "latest"
 onefetch = "latest"

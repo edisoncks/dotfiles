@@ -2,3 +2,7 @@ font-family = Maple Mono NF CN
 font-size = 12
 theme = Catppuccin Mocha
 maximize = true
+
+# Scroll the viewport up/down by 3 lines (Ctrl+Shift+Up / Ctrl+Shift+Down)
+keybind = ctrl+shift+arrow_up=scroll_page_lines:-3
+keybind = ctrl+shift+arrow_down=scroll_page_lines:3

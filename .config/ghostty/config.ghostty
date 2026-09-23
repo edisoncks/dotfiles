@@ -6,3 +6,11 @@ maximize = true
 # Scroll the viewport up/down by 3 lines (Ctrl+Shift+Up / Ctrl+Shift+Down)
 keybind = ctrl+shift+arrow_up=scroll_page_lines:-3
 keybind = ctrl+shift+arrow_down=scroll_page_lines:3
+
+# Clear the selection after copying so a second Ctrl+C interrupts the running command
+selection-clear-on-copy = true
+
+# Copy the current selection with Ctrl+C (falls through to SIGINT when nothing is selected)
+# Paste from the system clipboard with Ctrl+V
+keybind = performable:ctrl+c=copy_to_clipboard:mixed
+keybind = ctrl+v=paste_from_clipboard

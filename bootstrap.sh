@@ -22,6 +22,7 @@ fi
 DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 declare -a DOTFILES=(
   ".bashrc.d"
+  ".config/btop"
   ".config/delta"
   ".config/ghostty"
   ".config/lazygit"

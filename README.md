@@ -40,10 +40,10 @@ System upgrades are handled via the `topgrade` config in `.config/topgrade.toml`
 
 ## 🗂️ What's managed
 
-| Path                                                                                                                            | Purpose                                                     |
-| ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `.bash_profile`, `.bashrc`, `.bashrc.d/`                                                                                        | Shell setup                                                 |
-| `.config/ghostty`, `.config/lazygit`, `.config/mpv`, `.config/nvim`, `.config/starship.toml`, `.config/yazi`, `.config/neovide` | App configs                                                 |
-| `.config/mise`, `.config/topgrade.toml`                                                                                         | Tool / upgrade management                                   |
-| `.pi/agent/`                                                                                                                    | Pi agent settings, keybindings, extensions, prompts, skills |
-| `.gitconfig`                                                                                                                    | Git config                                                  |
+| Path                                                                                                                                            | Purpose                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| `.bash_profile`, `.bashrc`, `.bashrc.d/`                                                                                                        | Shell setup                                                 |
+| `.config/btop`, `.config/ghostty`, `.config/lazygit`, `.config/mpv`, `.config/nvim`, `.config/starship.toml`, `.config/yazi`, `.config/neovide` | App configs                                                 |
+| `.config/mise`, `.config/topgrade.toml`                                                                                                         | Tool / upgrade management                                   |
+| `.pi/agent/`                                                                                                                                    | Pi agent settings, keybindings, extensions, prompts, skills |
+| `.gitconfig`                                                                                                                                    | Git config                                                  |

@@ -1,5 +1,8 @@
-# yazi.toml theme — Catppuccin, auto dark/light via flavors.
+# yazi theme — Catppuccin Mocha, always dark.
+# Both modes point to Mocha because Ghostty 1.3.1 misreports the terminal color
+# scheme as "light" when using a non-conditional theme, which would otherwise
+# make yazi load Catppuccin Latte on this dark terminal.
 # Flavor files live in flavors/ (gitignored, installed by `ya pkg install`).
 [flavor]
 dark = "catppuccin-mocha"
-light = "catppuccin-latte"
+light = "catppuccin-mocha"

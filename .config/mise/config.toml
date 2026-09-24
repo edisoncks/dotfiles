@@ -3,12 +3,7 @@
 "aqua:ViRb3/wgcf" = "latest"
 aws-cli = { version = "latest", symlink_bins = "true" }
 bat = "latest"
-# btop (installed via aqua) extracts the upstream release tarball to
-# $MISE_TOOL_INSTALL_PATH/btop/{bin, themes}, but btop only searches for system
-# themes at <binary_dir>/../share/btop/themes. Without this symlink btop sees
-# only the built-in Default/TTY themes instead of the bundled 41. The postinstall
-# recreates the symlink after every install/upgrade. Do not remove.
-btop = { version = "latest", postinstall = "mkdir -p \"$MISE_TOOL_INSTALL_PATH/btop/share/btop\" && ln -sfn ../../themes \"$MISE_TOOL_INSTALL_PATH/btop/share/btop/themes\"" }
+btop = "latest"
 bun = "latest"
 cargo-binstall = "latest"
 "cargo:tree-sitter-cli" = "latest"

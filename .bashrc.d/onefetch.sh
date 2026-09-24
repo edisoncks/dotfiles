@@ -31,9 +31,14 @@ _onefetch_on_cd() {
   command onefetch || true
 }
 
-# Register without clobbering an existing scalar or array PROMPT_COMMAND.
-if [[ $(declare -p PROMPT_COMMAND 2>/dev/null) == "declare -a"* ]]; then
+# Register, preserving any existing PROMPT_COMMAND.
+# Bash 5.1+ runs every array element; older bash only runs the scalar value /
+# element 0, so write into element 0 there instead of appending a new element.
+if (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 1) )); then
+  PROMPT_COMMAND=${PROMPT_COMMAND-}
   PROMPT_COMMAND+=(_onefetch_on_cd)
 else
+  # Drop trailing whitespace/semicolons so we never build an invalid ";;".
+  PROMPT_COMMAND="${PROMPT_COMMAND%"${PROMPT_COMMAND##*[![:space:];]}"}"
   PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}_onefetch_on_cd"
 fi

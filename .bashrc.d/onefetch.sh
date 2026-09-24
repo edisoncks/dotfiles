@@ -28,6 +28,8 @@ _onefetch_on_cd() {
   # onefetch errors on repos without commits; skip them quietly.
   command git rev-parse --verify --quiet HEAD >/dev/null || return 0
 
+  # Keep the report visually separate from the command that triggered it.
+  printf '\n'
   command onefetch || true
 }
 

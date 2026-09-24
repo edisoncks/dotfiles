@@ -28,6 +28,7 @@ declare -a DOTFILES=(
   ".config/mpv"
   ".config/neovide"
   ".config/nvim"
+  ".config/starship.toml"
   ".config/topgrade.toml"
   ".config/yazi"
   ".pi/agent/settings.json"

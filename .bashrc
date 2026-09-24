@@ -39,6 +39,11 @@ if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate bash)"
 fi
 
+# Starship
+if command -v starship >/dev/null 2>&1; then
+  eval "$(starship init bash)"
+fi
+
 # EDITOR (resolve via PATH; fall back to vi on minimal systems)
 if command -v nvim >/dev/null 2>&1; then
   EDITOR=nvim

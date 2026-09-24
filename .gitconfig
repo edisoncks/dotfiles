@@ -1,9 +1,12 @@
+[include]
+  path = ~/.config/delta/catppuccin.gitconfig
 [core]
   pager = delta
   autocrlf = false
 [interactive]
   diffFilter = delta --color-only
 [delta]
+  features = catppuccin-mocha
   line-numbers = true
   navigate = true
   side-by-side = true

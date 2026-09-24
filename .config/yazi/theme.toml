@@ -1,0 +1,5 @@
+# yazi.toml theme — Catppuccin, auto dark/light via flavors.
+# Flavor files live in flavors/ (gitignored, installed by `ya pkg install`).
+[flavor]
+dark = "catppuccin-mocha"
+light = "catppuccin-latte"

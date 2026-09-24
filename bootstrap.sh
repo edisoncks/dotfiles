@@ -64,6 +64,9 @@ echo "✅ Installed mise tools"
 # Activate mise
 eval "$($MISE_INSTALL_PATH activate bash)"
 
+# Install yazi flavors/plugins from the locked package.toml (flavors/ is ignored, not vendored)
+ya pkg install || echo "⚠️  yazi package install failed (offline?) — run 'ya pkg install' later"
+
 # Fetch Anime4K shaders (ignored, not vendored)
 "$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
 

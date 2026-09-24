@@ -7,3 +7,16 @@ root = true
 [*]
 charset = utf-8
 end_of_line = lf
+
+# Shell scripts: 2-space indentation
+[*.{sh,bash}]
+indent_style = space
+indent_size = 2
+
+[.bashrc]
+indent_style = space
+indent_size = 2
+
+[.bash_profile]
+indent_style = space
+indent_size = 2

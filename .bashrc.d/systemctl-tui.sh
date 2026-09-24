@@ -7,15 +7,15 @@
 #   only *ghostty* TERMs to xterm-256color (present for user+root); all other
 #   TERMs pass through untouched.
 systemctl-tui() {
-	local bin term
-	bin=$(mise which systemctl-tui 2>/dev/null) || bin=$(type -P systemctl-tui 2>/dev/null) || {
-		echo "systemctl-tui: not found (is mise installed?)" >&2
-		return 127
-	}
-	case "${TERM:-}" in
-		*ghostty*) term=xterm-256color ;;
-		"") term=xterm-256color ;;
-		*) term=$TERM ;;
-	esac
-	sudo env TERM="$term" "$bin" "$@"
+  local bin term
+  bin=$(mise which systemctl-tui 2>/dev/null) || bin=$(type -P systemctl-tui 2>/dev/null) || {
+    echo "systemctl-tui: not found (is mise installed?)" >&2
+    return 127
+  }
+  case "${TERM:-}" in
+    *ghostty*) term=xterm-256color ;;
+    "") term=xterm-256color ;;
+    *) term=$TERM ;;
+  esac
+  sudo env TERM="$term" "$bin" "$@"
 }

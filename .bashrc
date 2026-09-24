@@ -2,7 +2,7 @@
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
-	. /etc/bashrc
+  . /etc/bashrc
 fi
 
 # User specific environment
@@ -21,43 +21,43 @@ export PATH
 
 # User specific aliases and functions
 if [ -d ~/.bashrc.d ]; then
-	for rc in ~/.bashrc.d/*; do
-		if [ -f "$rc" ]; then
-			. "$rc"
-		fi
-	done
+  for rc in ~/.bashrc.d/*; do
+    if [ -f "$rc" ]; then
+      . "$rc"
+    fi
+  done
 fi
 unset rc
 
 # Enable truecolor in Windows Terminal
 if [ -n "$WT_SESSION" ] && [ -z "$COLORTERM" ]; then
-	export COLORTERM=truecolor
+  export COLORTERM=truecolor
 fi
 
 # Mise
 if command -v mise >/dev/null 2>&1; then
-	eval "$(mise activate bash)"
+  eval "$(mise activate bash)"
 fi
 
 # EDITOR (resolve via PATH; fall back to vi on minimal systems)
 if command -v nvim >/dev/null 2>&1; then
-	EDITOR=nvim
+  EDITOR=nvim
 else
-	EDITOR=vi
+  EDITOR=vi
 fi
 export EDITOR
 
 # OpenCode
 if command -v opencode >/dev/null 2>&1; then
-	export OPENCODE_ENABLE_EXA=1
+  export OPENCODE_ENABLE_EXA=1
 fi
 
 # Pi
 if command -v pi >/dev/null 2>&1; then
-	export PI_SKIP_VERSION_CHECK=1
+  export PI_SKIP_VERSION_CHECK=1
 fi
 
 # fzf
 if command -v fzf >/dev/null 2>&1; then
-	eval "$(fzf --bash)"
+  eval "$(fzf --bash)"
 fi

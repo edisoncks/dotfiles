@@ -2,8 +2,8 @@
 # (erroring with "stdout is not a terminal" when piped). Wrap the real binary
 # so -h/--help prints usage; forward everything else unchanged.
 nyan() {
-	if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
-		cat <<'EOF'
+  if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    cat <<'EOF'
 nyan - Gruvbox Nyancat: terminal animation + 8-bit chiptune.
 
 Usage: nyan [OPTIONS]
@@ -26,13 +26,13 @@ then ./nyan.wav, then alongside the installed program.
 With no options, nyan plays the animation with sound when a soundtrack and
 afplay are available. Press Ctrl-C to quit and restore the terminal.
 EOF
-		return 0
-	fi
+    return 0
+  fi
 
-	# type -P (not command -v) finds the external binary, not this function.
-	type -P nyan >/dev/null 2>&1 || {
-		echo "nyan: command not found" >&2
-		return 127
-	}
-	command nyan "$@"
+  # type -P (not command -v) finds the external binary, not this function.
+  type -P nyan >/dev/null 2>&1 || {
+    echo "nyan: command not found" >&2
+    return 127
+  }
+  command nyan "$@"
 }

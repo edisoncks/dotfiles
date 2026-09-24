@@ -9,8 +9,8 @@ SHADER_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)/shad
 MARKER="$SHADER_DIR/Anime4K_Clamp_Highlights.glsl"
 
 if [ "${1:-}" != "--force" ] && [ -f "$MARKER" ]; then
-	echo "✅ Anime4K shaders already present in $SHADER_DIR, skipping (use --force to re-fetch)"
-	exit 0
+  echo "✅ Anime4K shaders already present in $SHADER_DIR, skipping (use --force to re-fetch)"
+  exit 0
 fi
 
 mkdir -p "$SHADER_DIR"
@@ -21,12 +21,12 @@ echo "⌛ Downloading Anime4K $ANIME4K_VERSION..."
 curl -fsSL --retry 3 --retry-delay 2 --retry-all-errors -o "$WORK_DIR/Anime4K.zip" "$ANIME4K_URL"
 
 if command -v unzip >/dev/null 2>&1; then
-	unzip -o -q -j "$WORK_DIR/Anime4K.zip" '*.glsl' -d "$SHADER_DIR"
+  unzip -o -q -j "$WORK_DIR/Anime4K.zip" '*.glsl' -d "$SHADER_DIR"
 elif command -v 7zz >/dev/null 2>&1; then
-	7zz x -y -o"$SHADER_DIR" "$WORK_DIR/Anime4K.zip" '*.glsl' >/dev/null
+  7zz x -y -o"$SHADER_DIR" "$WORK_DIR/Anime4K.zip" '*.glsl' >/dev/null
 else
-	echo "❌ Neither unzip nor 7zz found (mise use -g 7zip) — shaders not installed"
-	exit 1
+  echo "❌ Neither unzip nor 7zz found (mise use -g 7zip) — shaders not installed"
+  exit 1
 fi
 
 count=$(find "$SHADER_DIR" -maxdepth 1 -name '*.glsl' | wc -l | tr -d '[:space:]')

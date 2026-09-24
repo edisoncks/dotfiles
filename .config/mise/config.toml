@@ -13,6 +13,7 @@ fd = "latest"
 ffmpeg = "latest"
 fzf = "latest"
 gh = "latest"
+"github:Huseynteymurzade28/pokeductor" = { version = "latest", matching = "musl" }
 "github:YS-L/csvlens" = "latest"
 "github:h4ckf0r0day/obscura" = { version = "latest", asset_pattern = "obscura-x86_64-linux-stealth.tar.gz" }
 "github:iOfficeAI/OfficeCLI" = "latest"

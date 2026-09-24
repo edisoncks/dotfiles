@@ -1,20 +1,20 @@
 [core]
-	pager = delta
-	autocrlf = false
+  pager = delta
+  autocrlf = false
 [interactive]
-	diffFilter = delta --color-only
+  diffFilter = delta --color-only
 [delta]
-	line-numbers = true
-	navigate = true
-	side-by-side = true
+  line-numbers = true
+  navigate = true
+  side-by-side = true
 [merge]
-	conflictStyle = zdiff3
+  conflictStyle = zdiff3
 [user]
-	name = Edison Chong
-	email = kurai.no.yozora@gmail.com
+  name = Edison Chong
+  email = kurai.no.yozora@gmail.com
 [credential "https://github.com"]
-	helper = 
-	helper = !gh auth git-credential
+  helper = 
+  helper = !gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = 
-	helper = !gh auth git-credential
+  helper = 
+  helper = !gh auth git-credential

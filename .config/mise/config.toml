@@ -16,6 +16,7 @@ fzf = "latest"
 gh = "latest"
 "github:Huseynteymurzade28/pokeductor" = { version = "latest", matching = "musl" }
 "github:YS-L/csvlens" = "latest"
+"github:coder/code-server" = "latest"
 "github:h4ckf0r0day/obscura" = { version = "latest", asset_pattern = "obscura-x86_64-linux-stealth.tar.gz" }
 "github:iOfficeAI/OfficeCLI" = "latest"
 "github:mikeleppane/envx" = "latest"
@@ -50,3 +51,18 @@ zoxide = "latest"
 
 [settings]
 auto_update = false
+
+[hooks]
+# 安装/升级 code-server 后自动把本机 Nerd Font 注入其 workbench.css，
+# 让手机浏览器终端也能显示 Nerd Font（详见 ~/.local/bin/code-server-font-patch.sh）。
+# MISE_INSTALLED_TOOLS 是 postinstall hook 注入的 JSON 数组，仅在本次装的是
+# code-server 时才执行，避免每次装别的工具都白跑一遍。
+postinstall = '''
+if [ -n "${MISE_INSTALLED_TOOLS:-}" ] && printf '%s' "$MISE_INSTALLED_TOOLS" | grep -q 'code-server'; then
+  if [ -x "$HOME/.local/bin/code-server-font-patch.sh" ]; then
+    "$HOME/.local/bin/code-server-font-patch.sh"
+  else
+    echo 'code-server-font-patch.sh 不存在，跳过字体注入' >&2
+  fi
+fi
+'''

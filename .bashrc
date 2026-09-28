@@ -44,6 +44,35 @@ if command -v starship >/dev/null 2>&1; then
   eval "$(starship init bash)"
 fi
 
+# Shell integration: report the working directory via OSC 7 so that new
+# tabs/panes inherit the current directory. OSC 7 is a generic terminal
+# protocol (iTerm2, kitty, ghostty, foot, WezTerm, ...); terminals that don't
+# understand it simply ignore the sequence. We only skip non-interactive shells
+# and the terminals known to dislike OSC (dumb/linux).
+# The path is percent-encoded byte by byte so that spaces, '#', '%', non-ASCII
+# and even embedded control characters can't break out of the OSC sequence.
+if [[ $- == *i* && "${TERM:-}" != "dumb" && "${TERM:-}" != "linux" ]]; then
+  __shell_osc7() {
+    local dir=$PWD out= c h i
+    local LC_ALL=C
+    for ((i = 0; i < ${#dir}; i++)); do
+      c=${dir:i:1}
+      case $c in
+        [a-zA-Z0-9/._~-]) out+=$c ;;
+        *) printf -v h '%%%02X' "'$c"; out+=$h ;;
+      esac
+    done
+    printf '\033]7;file://%s%s\033\\' "${HOSTNAME:-localhost}" "$out"
+  }
+  # Compose with whatever PROMPT_COMMAND already holds (string or array),
+  # and avoid stacking a duplicate if this file gets sourced more than once.
+  if [[ "$(declare -p PROMPT_COMMAND 2>/dev/null)" == "declare -a"* ]]; then
+    [[ " ${PROMPT_COMMAND[*]} " == *" __shell_osc7 "* ]] || PROMPT_COMMAND=(__shell_osc7 "${PROMPT_COMMAND[@]}")
+  else
+    [[ "${PROMPT_COMMAND:-}" == *"__shell_osc7"* ]] || PROMPT_COMMAND="__shell_osc7${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+  fi
+fi
+
 # EDITOR (resolve via PATH; fall back to vi on minimal systems)
 if command -v nvim >/dev/null 2>&1; then
   EDITOR=nvim

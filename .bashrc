@@ -51,6 +51,14 @@ fi
 # and the terminals known to dislike OSC (dumb/linux).
 # The path is percent-encoded byte by byte so that spaces, '#', '%', non-ASCII
 # and even embedded control characters can't break out of the OSC sequence.
+#
+# ORDER MATTERS: keep this block AFTER mise/starship. Both rewrite
+# PROMPT_COMMAND, and starship in particular *moves* any pre-existing
+# PROMPT_COMMAND into $STARSHIP_PROMPT_COMMAND, replacing the visible value with
+# just `starship_precmd` (the old value is re-eval'd from inside precmd). If we
+# register before it, our hook is hidden from the de-dup check below, so a
+# re-source would register it twice and emit OSC 7 twice per prompt. Placing it
+# last keeps our function visible and the registration idempotent.
 if [[ $- == *i* && "${TERM:-}" != "dumb" && "${TERM:-}" != "linux" ]]; then
   __shell_osc7() {
     local dir=$PWD out= c h i

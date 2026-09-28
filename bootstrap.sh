@@ -40,6 +40,7 @@ declare -a DOTFILES=(
   ".pi/agent/extensions"
   ".pi/agent/prompts"
   ".pi/agent/skills"
+  ".local/bin/code-server-font-patch.sh"
   ".bash_profile"
   ".bashrc"
   ".gitconfig"

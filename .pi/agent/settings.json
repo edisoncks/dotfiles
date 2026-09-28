@@ -12,6 +12,7 @@
     "xiaomi/mimo-v2.6-flash",
     "xiaomi/mimo-v2.6-pro",
     "opencode-go/gpt-5.6-luna",
+    "opencode-go/gpt-6-luna",
     "opencode-go/glm-5.3-flash",
     "opencode-go/qwen3.8-flash",
     "opencode-go/muse-spark-1.3-contributor",
@@ -26,7 +27,8 @@
     "npm:pi-cc-header",
     "git:github.com/edisoncks/pi-notify-beep",
     "git:github.com/edisoncks/pi-web-search",
-    "git:github.com/edisoncks/pi-plan-mode"
+    "git:github.com/edisoncks/pi-plan-mode",
+    "git:github.com/edisoncks/pi-whale-chan"
   ],
   "editorPaddingX": 1,
   "quietStartup": true,

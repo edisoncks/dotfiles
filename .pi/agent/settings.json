@@ -51,5 +51,12 @@
   "showHardwareCursor": false,
   "terminal": {
     "showTerminalProgress": true
+  },
+  "steeringMode": "all",
+  "followUpMode": "all",
+  "defaultTools": ["+codemode"],
+  "codemode": {
+    "mode": "only",
+    "inlineBudget": 6000
   }
 }

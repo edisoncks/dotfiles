@@ -48,6 +48,7 @@ starship = "latest"
 topgrade = "latest"
 uv = "latest"
 yazi = "latest"
+yt-dlp = { version = "latest", rename_exe = "yt-dlp" }
 zoxide = "latest"
 
 [settings]

@@ -6,7 +6,7 @@
   "defaultThinkingLevel": "high",
   "transport": "auto",
   "enableInstallTelemetry": false,
-  "treeFilterMode": "default",
+  "treeFilterMode": "no-tools",
   "enabledModels": [
     "deepseek/deepseek-flash",
     "xiaomi/mimo-v2.6-flash",
@@ -43,9 +43,13 @@
     "sloganColor": true,
     "disabled": false
   },
-  "tuiMode": "regular",
+  "tuiMode": "fullscreen",
   "fullscreenScrollbar": "auto",
   "showCacheMissNotices": true,
   "collapseChangelog": true,
-  "doubleEscapeAction": "tree"
+  "doubleEscapeAction": "tree",
+  "showHardwareCursor": false,
+  "terminal": {
+    "showTerminalProgress": true
+  }
 }

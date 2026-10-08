@@ -21,12 +21,12 @@ gh = "latest"
 "github:iOfficeAI/OfficeCLI" = "latest"
 "github:mikeleppane/envx" = "latest"
 "github:pkgforge-dev/ghostty-appimage" = { version = "latest", asset_pattern = "Ghostty-{{ version }}-x86_64.AppImage", bin = "ghostty" }
+"github:pkgforge-dev/mpv-AppImage" = { version = "latest", asset_pattern = "mpv-*-anylinux-x86_64.AppImage", bin = "mpv" }
 "github:rgwood/systemctl-tui" = "latest"
 imagemagick = "latest"
 jq = "latest"
 lazydocker = "latest"
 lazygit = "latest"
-mpv = "latest"
 neovim = "latest"
 node = "26"
 "npm:@agegr/pi-web" = "latest"

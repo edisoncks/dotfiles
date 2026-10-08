@@ -23,8 +23,6 @@
   "hideThinkingBlock": true,
   "packages": [
     "npm:@narumitw/pi-btw",
-    "npm:@narumitw/pi-statusline",
-    "npm:pi-cc-header",
     "git:github.com/edisoncks/pi-notify-beep",
     "git:github.com/edisoncks/pi-web-search",
     "git:github.com/edisoncks/pi-plan-mode",

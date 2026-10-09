@@ -22,15 +22,13 @@
 #
 # ── 什么时候跑 ───────────────────────────────────────────────────────────────
 #   安装 / 升级 code-server 之后。因为改的是 mise 装的 code-server 文件，
-#   `mise upgrade` 会覆盖掉，需要重跑。mise postinstall hook 每次都调本脚本
-#   （见 ~/.config/mise/config.toml 的 [hooks] 段），该不该动手、往哪儿打补丁
-#   都由脚本自己判断；当然也可以手动跑。
+#   `mise upgrade` 会覆盖掉，需要重跑。config.toml 里给 code-server 配了 tool-level
+#   postinstall（只在这个工具真正安装/升级时触发，别的工具安装不会叫它），
+#   也可以手动跑本脚本。
 #
 # ── 环境变量 ─────────────────────────────────────────────────────────────────
-#   CODE_SERVER_ROOT    显式指定 code-server 安装根目录。优先级最高（步骤 1）。
-#   MISE_INSTALLED_TOOLS  mise postinstall hook 注入的 JSON 数组（本次实际装了哪些
-#                       工具）。里面有 code-server 时，取其 install_path 当目标目录；
-#                       没有它就说明这次 hook 是别的工具触发的，直接退出。
+#   CODE_SERVER_ROOT        显式指定 code-server 安装根目录。优先级最高（步骤 1）。
+#   MISE_TOOL_INSTALL_PATH  mise tool-level postinstall 注入的“本次安装的精确目录”。
 #
 # ── 用法 ─────────────────────────────────────────────────────────────────────
 #   ~/.local/bin/code-server-font-patch.sh
@@ -39,8 +37,7 @@
 set -euo pipefail
 
 # ── 常量 ──────────────────────────────────────────────────────────────────────
-BACKEND="github:coder/code-server"              # mise 里本工具的 backend id
-BACKEND_DIR="github-coder-code-server"          # 对应 installs/ 下的目录名（mise 把 ':' 和 '/' 换成 '-'）
+BACKEND_DIR="github-coder-code-server"          # installs/ 下的目录名（mise 把 backend id 里的 ':' 和 '/' 换成 '-'）
 SRC="$HOME/.local/share/fonts"                   # 本机已安装字体的来源
 FONT_NAME="Maple Mono NF CN"
 CSS_MARKER="CUSTOM WEBFONT: ${FONT_NAME}"        # 幂等标记：已注入就跳过
@@ -48,38 +45,17 @@ CSS_MARKER="CUSTOM WEBFONT: ${FONT_NAME}"        # 幂等标记：已注入就�
 # ── 1. 决定目标目录（CS = code-server 安装根目录）─────────────────────────────
 # 优先级从高到低：
 #   1) CODE_SERVER_ROOT          显式指定（手动跑时用）
-#   2) MISE_INSTALLED_TOOLS 里的 install_path：本次安装的精确目录
-#   3) installs/<backend>/latest 浮动软链（本次没装 code-server 时的兜底）
+#   2) MISE_TOOL_INSTALL_PATH    mise tool-level postinstall 注入的本次安装精确目录
+#   3) installs/<backend>/latest 浮动软链（手动跑、且上面两个都没给时的兜底）
 #
-# 为什么 hook 场景必须走第 2 条、不能直接用 latest：postinstall hook 是在各工具都
-# 装完之后、mise 重建 floating runtime symlink（latest 及各版本前缀，由
+# 为什么 hook 场景必须走第 2 条、不能直接用 latest：postinstall 是在工具文件落地之后、
+# mise 重建 floating runtime symlink（latest 及各版本前缀，由
 # runtime_symlinks::generated_names_for 生成）之前跑的。此刻 latest 要么还不存在
 # （首次安装），要么还指着上一个版本（升级）——照着它打补丁会静默空转或打到旧版本。
-# install_path 则被 mise 明确保证不是 latest 这类浮动软链。
-CS="${CODE_SERVER_ROOT:-}"
-if [ -z "$CS" ] && [ -n "${MISE_INSTALLED_TOOLS:-}" ]; then
-  if ! printf '%s' "$MISE_INSTALLED_TOOLS" | grep -qF "\"backend\":\"$BACKEND\""; then
-    # 本次 hook 是别的工具触发的：不碰任何东西（也省掉 uvx 转换），也不出声，
-    # 毕竟每次 mise install 都会把我们叫起来，安静点比较好。
-    exit 0
-  fi
-  # 优先 jq；新机器上 jq 可能还没装好，退化成纯 shell 解析同样的 JSON
-  CS=$(printf '%s' "$MISE_INSTALLED_TOOLS" \
-    | jq -r --arg b "$BACKEND" '[.[] | select(.backend == $b)][0].install_path // empty' 2>/dev/null) || CS=""
-  if [ -z "$CS" ]; then
-    CS=$(printf '%s' "$MISE_INSTALLED_TOOLS" \
-      | sed 's/},{/}\n{/g' \
-      | grep -F "\"backend\":\"$BACKEND\"" \
-      | sed -n 's/.*"install_path":"\([^"]*\)".*/\1/p' \
-      | tail -1)
-  fi
-  if [ -n "$CS" ]; then
-    echo "目标：本次安装的 $BACKEND 位于 $CS" >&2
-  else
-    echo "警告：MISE_INSTALLED_TOOLS 里解析不到 $BACKEND 的 install_path，退回 latest（hook 阶段该软链可能尚未重建）" >&2
-  fi
-fi
+# MISE_TOOL_INSTALL_PATH 就是 mise 为这个坑准备的精确目录。
+CS="${CODE_SERVER_ROOT:-${MISE_TOOL_INSTALL_PATH:-}}"
 [ -n "$CS" ] || CS="$HOME/.local/share/mise/installs/$BACKEND_DIR/latest"
+echo "目标目录：$CS" >&2
 
 WB="$CS/lib/vscode/out/vs/code/browser/workbench"   # code-server 服务 workbench.css 的目录
 FONTDIR="$WB/fonts"                                  # 字体放这里，与 workbench.css 同源

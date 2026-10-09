@@ -27,7 +27,10 @@
 # ── 环境变量 ─────────────────────────────────────────────────────────────────
 #   CODE_SERVER_ROOT   code-server 安装根目录
 #                      默认：~/.local/share/mise/installs/github-coder-code-server/latest
-#                      该路径是软链，指向当前实际版本，所以升级后依旧有效。
+#                      手动跑时用这个软链就行（它指向当前实际版本）。
+#                      mise postinstall hook 会显式传入本次安装的精确目录
+#                      （MISE_INSTALLED_TOOLS 里的 install_path）：hook 触发时 `latest`
+#                      软链还没被 mise 重建出来，用不了（详见 config.toml 的注释）。
 #
 # ── 用法 ─────────────────────────────────────────────────────────────────────
 #   ~/.local/bin/code-server-font-patch.sh

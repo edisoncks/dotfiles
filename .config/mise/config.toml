@@ -59,10 +59,32 @@ auto_update = false
 # 让手机浏览器终端也能显示 Nerd Font（详见 ~/.local/bin/code-server-font-patch.sh）。
 # MISE_INSTALLED_TOOLS 是 postinstall hook 注入的 JSON 数组，仅在本次装的是
 # code-server 时才执行，避免每次装别的工具都白跑一遍。
+#
+# 注意：不能把脚本指向 installs/github-coder-code-server/latest。postinstall hook
+# 是在各工具都装完之后、mise 重建 floating runtime symlink（latest 及各版本前缀，
+# 由 runtime_symlinks::generated_names_for 生成）之前跑的，此刻 latest 要么还不存在
+# （首次安装），要么还指着上一个版本（升级）——两种情况都会让脚本悄悄空转。
+# MISE_INSTALLED_TOOLS 里每项的 install_path 是本次安装的精确目录（mise 明确保证
+# 它不是 latest 这类浮动软链），所以直接用它当 CODE_SERVER_ROOT。
 postinstall = '''
 if [ -n "${MISE_INSTALLED_TOOLS:-}" ] && printf '%s' "$MISE_INSTALLED_TOOLS" | grep -q 'code-server'; then
   if [ -x "$HOME/.local/bin/code-server-font-patch.sh" ]; then
-    "$HOME/.local/bin/code-server-font-patch.sh"
+    cs_root=$(printf '%s' "$MISE_INSTALLED_TOOLS" \
+      | jq -r '[.[] | select(.backend == "github:coder/code-server")][0].install_path // empty' 2>/dev/null) || cs_root=""
+    if [ -z "$cs_root" ]; then
+      # jq 不可用（例如新机器上 jq 还没装好）时，用纯 shell 解析同样的 JSON
+      cs_root=$(printf '%s' "$MISE_INSTALLED_TOOLS" \
+        | sed 's/},{/}\n{/g' \
+        | grep '"backend":"github:coder/code-server"' \
+        | sed -n 's/.*"install_path":"\([^"]*\)".*/\1/p' \
+        | tail -1)
+    fi
+    if [ -n "$cs_root" ]; then
+      echo "注入 Nerd Font 到 $cs_root" >&2
+      CODE_SERVER_ROOT="$cs_root" "$HOME/.local/bin/code-server-font-patch.sh"
+    else
+      echo 'MISE_INSTALLED_TOOLS 里没找到 code-server 的 install_path，跳过字体注入' >&2
+    fi
   else
     echo 'code-server-font-patch.sh 不存在，跳过字体注入' >&2
   fi

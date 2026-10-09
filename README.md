@@ -21,11 +21,18 @@ source ~/.bash_profile
 `bootstrap.sh` is idempotent and runs in order:
 
 1. Symlinks dotfiles into `$HOME` (existing files are backed up to `*.bak.<timestamp>`).
-2. Runs `mise install` using `.config/mise/config.toml`.
-3. Activates mise, then fetches Anime4K shaders for mpv (skipped when already present; warn-only on failure).
-4. Installs the pinned [Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts)
+2. Installs the `7zip` and `uv` prerequisites and activates mise, so `7zz` and `uvx`
+   are on PATH for the steps below (mise installs tools in parallel, so a bulk install
+   gives no ordering guarantee).
+3. Installs the pinned [Mononoki Nerd Font](https://github.com/ryanoasis/nerd-fonts)
    (`v3.5.1`) and [Maple Mono NF CN](https://github.com/subframe7536/Maple-font)
    (`v7.9`, unhinted) into `~/.local/share/fonts/` (each skipped when already installed).
+   These must land before step 4: code-server's postinstall injects Maple Mono NF CN into
+   its workbench and fails hard when the font is missing.
+4. Runs `mise install` for the remaining tools from `.config/mise/config.toml`
+   (including code-server, whose postinstall then finds both the font and `uvx`).
+5. Installs yazi packages, then fetches Anime4K shaders for mpv (skipped when already
+   present; warn-only on failure).
 
 ## 🧰 Tooling
 

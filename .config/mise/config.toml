@@ -64,6 +64,10 @@ zoxide = "latest"
 # Trade-off: a failing script (missing font, uvx failure) fails this code-server install
 # — on purpose, since silently doing nothing is exactly how this broke before. A missing
 # script only warns and never breaks the install.
+# Ordering: this hook needs Maple Mono NF CN under ~/.local/share/fonts and uvx on PATH,
+# so bootstrap.sh installs the fonts (plus the 7zip/uv prerequisites) before it runs the
+# bulk `mise install`. Moving the font step back after `mise install` breaks fresh installs
+# here, because mise installs tools in parallel and runs this hook mid-install.
 [tools."github:coder/code-server"]
 version = "latest"
 postinstall = '''

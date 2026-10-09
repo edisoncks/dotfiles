@@ -60,22 +60,24 @@ for i in "${DOTFILES[@]}"; do
   echo "✅ Created symlinks for ~/$i"
 done
 
-# Install mise tools
-"$MISE_INSTALL_PATH" install
-echo "✅ Installed mise tools"
+# Prerequisites: the two tools the later steps depend on.
+#   * 7zz (mise's 7zip) unpacks the Maple Mono NF CN zip below;
+#   * uv supplies uvx, which code-server's tool-level postinstall runs.
+# mise installs tools in parallel, so neither is guaranteed to exist yet when
+# code-server's postinstall fires. Explicit @latest specs keep these installed
+# versions independent of whatever project config happens to be in the cwd.
+# mise creates the 7zz/uvx shims as part of the install itself — no reshim.
+"$MISE_INSTALL_PATH" install 7zip@latest uv@latest
+echo "✅ Installed bootstrap prerequisites (7zip, uv)"
 
-# Activate mise
+# Activate mise: puts shims (7zz, uvx) on PATH for the steps below
 eval "$($MISE_INSTALL_PATH activate bash)"
 
-# Install yazi flavors/plugins from the locked package.toml (flavors/ is ignored, not vendored)
-ya pkg install || echo "⚠️  yazi package install failed (offline?) — run 'ya pkg install' later"
-
-# Fetch Anime4K shaders (ignored, not vendored)
-"$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
-
 # Install fonts (pinned; idempotent via per-font version markers)
-# Runs last, after mise tools are installed, so 7zz (mise-managed 7zip) is
-# available and a network hiccup cannot block package installation.
+# Must run before `mise install`: code-server's tool-level postinstall (see
+# .config/mise/config.toml) fails hard when Maple Mono NF CN is missing, and it
+# needs uvx on PATH. Keeping it before the bulk install also means a font or
+# network hiccup cannot leave the tools themselves uninstalled.
 NERD_FONTS_VERSION="v3.5.1"
 MAPLE_FONT_VERSION="v7.9"
 FONT_DIR="$HOME/.local/share/fonts"
@@ -132,6 +134,17 @@ else
   fi
   echo "✅ Installed Maple Mono NF CN $MAPLE_FONT_VERSION into $FONT_DIR"
 fi
+
+# Install the remaining tools — including code-server, whose postinstall now
+# finds both the font files above and uvx.
+"$MISE_INSTALL_PATH" install
+echo "✅ Installed mise tools"
+
+# Install yazi flavors/plugins from the locked package.toml (flavors/ is ignored, not vendored)
+ya pkg install || echo "⚠️  yazi package install failed (offline?) — run 'ya pkg install' later"
+
+# Fetch Anime4K shaders (ignored, not vendored)
+"$DIR/.config/mpv/fetch-anime4k.sh" || echo "⚠️  Anime4K fetch failed (offline?) — run .config/mpv/fetch-anime4k.sh later"
 
 # Reminder for the user's interactive shell only; the script itself is self-contained
 # (aliases, mise activate, etc. are loaded by sourcing ~/.bash_profile)

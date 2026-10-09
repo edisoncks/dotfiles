@@ -1,291 +1,205 @@
 ---
 name: obscura
-description: Operate the installed Obscura CLI for JavaScript-aware fetching, content extraction, parallel scraping, screenshots, proxying, stealth mode, and serving browser sessions.
+description: Use the installed Obscura headless browser CLI for JavaScript-rendered fetching, text/Markdown/link/cookie extraction, parallel scraping, screenshots and PDF, stealth browsing through proxies, persistent sessions, and CDP automation with Puppeteer or Playwright. Use whenever a task needs a rendered page rather than raw HTTP, a screenshot, a bot-resistant fetch, or a crawl of many URLs.
 ---
 
-# Obscura CLI
+# Obscura
 
-Use the installed `obscura` command-line application for JavaScript-aware page
-fetching, extraction, screenshots, parallel scraping, and server operation.
-
-This skill focuses only on CLI invocation and behavior. Do not switch to
-Puppeteer, Playwright, MCP, or raw CDP workflows unless the user explicitly
-requests them.
-
-## Command discovery
+A Rust headless browser with its own DOM, CSS and render pipeline on V8 — not a
+Chromium build. Installed as `obscura`, with `obscura-worker` beside it. Feature
+sets differ between archives, so the binary's own help is authoritative:
 
 ```bash
-obscura --help
 obscura --version
-obscura fetch --help
-obscura scrape --help
-obscura serve --help
+obscura --help
+obscura fetch --help        # fetch, scrape, serve and mcp each have their own
 ```
 
-Use shell quoting for JavaScript expressions and URLs containing special
-characters.
+The behavior described below can change between releases and feature sets. Trust
+`--help` and the observed output over this file.
 
 ## Fetch one page
 
-Use `fetch` for a single URL:
-
 ```bash
+obscura fetch https://example.com --dump text
 obscura fetch https://example.com --eval "document.title"
-obscura fetch https://example.com --dump text
-obscura fetch https://example.com --dump html
-obscura fetch https://example.com --dump links
-obscura fetch https://example.com --dump markdown
+obscura fetch https://example.com --eval "(function(){ return [...document.querySelectorAll('a')].map(a => a.href) })()"
+obscura fetch https://example.com --selector "main" --dump markdown -o page.md
 ```
 
-The default dump format is `html`.
+- `--dump`: `html` (default), `text`, `markdown`, `links`, `assets` (NDJSON of
+  every sub-resource plus `fetch()`/XHR URLs), `original` (raw response body,
+  binary-safe, bypasses the engine), `cookies` (JSON array, includes HttpOnly).
+- `--eval` takes one expression and prints JSON. A top-level `const` or `let`
+  evaluates to `null` — wrap multiple statements in an IIFE.
+- `-q/--quiet` keeps stdout clean for pipes; `-o/--output` writes a file.
 
-### Fetch output modes
+## Waiting
+
+`--wait-until`: `load` (CLI default), `domcontentloaded`, `networkidle2` (≤2
+connections active for 500ms), `networkidle0`. Nothing validates this value — a
+typo silently behaves as `load`, so judge the output, not the exit code. Under
+Puppeteer/Playwright the default is `domcontentloaded` instead.
+
+`--wait` omitted means adaptive settling that returns once the page is quiescent
+with a 5s cap; `--wait N` is a fixed N-second delay. `--timeout` bounds
+navigation separately (30s for `fetch`, 60s per URL for `scrape`).
+
+## Many URLs
 
 ```bash
-# Rendered HTML
-obscura fetch https://example.com --dump html
-
-# Readable text
-obscura fetch https://example.com --dump text
-
-# Extract links
-obscura fetch https://example.com --dump links
-
-# Convert the page to Markdown
-obscura fetch https://example.com --dump markdown
-
-# List referenced sub-resources as NDJSON
-obscura fetch https://example.com --dump assets
-
-# Return the raw response body
-obscura fetch https://example.com --dump original
+obscura scrape url1 url2 url3 --concurrency 20 --eval "document.title" --format json
+cat urls.txt | obscura scrape - --quiet --format json
+printf 'https://a\nhttps://b\n' | obscura fetch --file - --concurrency 4
 ```
 
-Use `--dump original` for binary or non-HTML resources such as images, JSON,
-JavaScript, and CSS. It bypasses the JavaScript/DOM processing layer and is
-binary-safe:
+`scrape` renders each page (needs `obscura-worker` on `PATH`, `--format` is
+`json` or `text`). `fetch --file` streams raw bodies only — one NDJSON status
+line per URL, no DOM and no screenshots.
+
+## Screenshots
 
 ```bash
-obscura fetch https://picsum.photos/200/300 --dump original > photo.jpg
-```
-
-The `assets` format emits one NDJSON record for each sub-resource URL the page
-references.
-
-### Evaluate JavaScript
-
-Use `--eval` to evaluate an expression in the loaded page:
-
-```bash
-obscura fetch https://example.com --eval "document.title"
-obscura fetch https://example.com \
-  --eval "document.querySelector('h1')?.textContent"
-```
-
-Write dump or evaluation output to a file with `--output`:
-
-```bash
-obscura fetch https://example.com \
-  --dump text \
-  --output page.txt
-```
-
-### Wait for page activity
-
-Use `--wait-until` to select the navigation lifecycle condition:
-
-```bash
-obscura fetch https://example.com --wait-until load
-obscura fetch https://example.com --wait-until domcontentloaded
-obscura fetch https://example.com --wait-until networkidle0
-```
-
-The default is `load`.
-
-Use `--selector` when the result depends on a particular element:
-
-```bash
-obscura fetch https://example.com \
-  --selector "main article" \
-  --dump text
-```
-
-Use `--wait` for post-load settling:
-
-```bash
-# Adaptive settling, used by default, with a five-second cap
-obscura fetch https://example.com --dump text
-
-# Fixed post-load delay in seconds
-obscura fetch https://example.com --wait 3 --dump text
-```
-
-`--wait-until` controls the navigation lifecycle condition. `--wait` controls
-additional settling after navigation. `--timeout` bounds navigation separately:
-
-```bash
-obscura fetch https://example.com --timeout 10
-```
-
-The timeout is measured in seconds and defaults to 30 seconds.
-
-### Capture a screenshot
-
-Capture the settled page as a PNG:
-
-```bash
-obscura fetch https://example.com --screenshot page.png
 obscura fetch https://example.com -s page.png
+obscura fetch https://example.com --eval "window.scrollTo(0, document.body.scrollHeight)" -s bottom.png
 ```
 
-The CLI screenshot option accepts one URL and requires a rendering-capable
-Obscura installation. Combine it with evaluation or scrolling when needed:
+1280×720 PNG, one URL, `--eval` runs before capture, needs a render-enabled
+build, unavailable in `--file` mode. PDF has no CLI flag: use `obscura serve`
+(CDP `Page.printToPDF`) or `obscura mcp` (`browser_pdf`). PDF output is
+raster-backed, so text is not selectable.
+
+## Local and private addresses
+
+Loopback, RFC1918, link-local (including `169.254.169.254`), and IPv6 ULA are
+blocked by default, checked at DNS-resolution time too:
 
 ```bash
-obscura fetch https://example.com \
-  --eval "window.scrollTo(0, document.documentElement.scrollHeight)" \
-  --screenshot bottom.png
+obscura fetch http://127.0.0.1:8080 --allow-private-network
 ```
 
-## Scrape multiple URLs
+Otherwise the fetch fails with `Access to private/internal IP address
+127.0.0.1 is not allowed`. The flag is global, so it also applies to `scrape`,
+`serve` and `mcp`. Enable it only for a dev server you know about — never to
+reach a URL someone merely pasted, since it defeats the SSRF guard.
 
-Use `scrape` for parallel processing of multiple URLs:
+## Stealth, proxies and identity
+
+`--stealth` (global) matches browser TLS fingerprints, masks `navigator.webdriver`
+and patched native functions, and blocks a 3,520-domain tracker list. It needs a
+stealth build. It does not beat Cloudflare interactive challenges, Datadome or
+Akamai bot manager, CAPTCHAs, or IP rate limits — those need proxies.
 
 ```bash
-obscura scrape https://example.com https://news.ycombinator.com \
-  --concurrency 25 \
-  --eval "document.querySelector('h1')?.textContent" \
-  --format json
+obscura --proxy http://user:pass@host:8080 --stealth fetch https://example.com
+obscura --proxy socks5://host:1080 serve
 ```
 
-The command uses worker processes and defaults to a concurrency of `10`.
+`HTTP_PROXY` / `HTTPS_PROXY` are ignored; use `--proxy` or `OBSCURA_PROXY`. Keep
+identity consistent with the exit IP: `OBSCURA_TIMEZONE` (default
+`Europe/Berlin`), `OBSCURA_GEOLOCATION="lat,lon"`, `OBSCURA_PROFILE=<index>` to
+pin a browser profile, `OBSCURA_ROTATE_PROFILE=1` to rotate per context (leave
+off when a proxy region or TLS fingerprint is pinned). `OBSCURA_BLOCK_TRACKERS=0`
+keeps the fingerprint but lets trackers through.
 
-Available options:
+## Sessions and stored state
 
-| Option | Default | Purpose |
+```bash
+obscura fetch https://example.com --storage-dir ./state   # cookies.json + localStorage/<origin>.json
+obscura serve --storage-dir ./state                       # shared by all CDP sessions
+```
+
+State is flushed on clean exit and after each navigation, so logging in once
+over CDP and reusing the directory beats replaying a login. `--dump cookies`
+retrieves HttpOnly session tokens that `document.cookie` cannot see.
+
+## Drive it from code (CDP)
+
+```bash
+obscura serve --port 9222 [--workers N]     # ws://127.0.0.1:9222
+```
+
+- Puppeteer: `puppeteer-core` with `browserWSEndpoint: 'ws://127.0.0.1:9222'`
+  (not the `puppeteer` package, which downloads Chrome).
+- Playwright: `chromium.connectOverCDP('ws://127.0.0.1:9222')` (`connect()`
+  speaks Playwright's own protocol, which Obscura does not implement).
+
+Supported: `goto`/`reload`/`goBack`/`goForward`, `evaluate`, `click`/`type`/`fill`,
+`waitFor*`, cookies and storage, request interception (`setRequestInterception` /
+`route` to block, modify or fulfil), `exposeFunction`, screenshot
+(viewport/clip/fullPage), `pdf`, raw CDP screencast, and the DOMSnapshot surface
+DOM-agent frameworks need. Pages share one V8 isolate, so a CPU-bound page delays
+the others. A non-loopback bind requires `OBSCURA_CDP_TOKEN` (≥32 bytes) sent as
+a bearer token.
+
+### playwright-cli against obscura
+
+`playwright-cli` drives obscura instead of launching its own browser — attach to
+the CDP server rather than `open`ing a browser:
+
+```bash
+obscura serve --port 9222 &
+playwright-cli -s=obs attach --cdp=http://127.0.0.1:9222
+playwright-cli -s=obs goto https://example.com
+playwright-cli -s=obs snapshot                 # then click/type/fill by ref
+playwright-cli -s=obs eval "document.title"
+playwright-cli -s=obs screenshot --filename=page.png
+playwright-cli -s=obs detach                   # obscura keeps running
+```
+
+`attach --cdp` accepts a bare `http://host:port` because obscura serves the
+`/json/version` discovery endpoint. This path carries the normal playwright-cli
+surface: `snapshot`, `eval`, `click`/`type`/`fill`, `screenshot`, `pdf`,
+`console`, `requests`, `route`, `cookie-*` and `state-save`/`state-load`.
+`detach` (or `close`) ends only the playwright-cli session and leaves the obscura
+process up, so use a named session (`-s=`) and a port that is not shared with
+another server. `open --browser=chrome` would launch real Chrome instead.
+
+## MCP
+
+`obscura mcp` for stdio, or `obscura mcp --http --port 3000`. Tools act on a live
+session, so navigate first and then snapshot, markdown, links, extract,
+click/fill/scroll/type, wait, evaluate, read network and console diagnostics, or
+handle cookies, storage state and tabs. Render builds add `browser_screenshot`
+and `browser_pdf`. Element refs go stale after navigation, clicking, scrolling or
+a rerender — take a fresh snapshot. Non-loopback HTTP needs `OBSCURA_MCP_TOKEN`;
+browser origins are denied unless `OBSCURA_MCP_ALLOWED_ORIGINS` lists them.
+
+## Tuning
+
+Environment variables, none of which appear in any `--help` output:
+
+| Variable | Default | Purpose |
 |---|---:|---|
-| `--concurrency <N>` | `10` | Number of parallel workers |
-| `--eval <EXPR>` | — | Evaluate a JavaScript expression for each page |
-| `--format <FORMAT>` | `json` | Emit `json` or `text` output |
-| `--quiet` | off | Suppress scrape progress on stderr |
-| `--proxy <URL>` | — | Use an HTTP or SOCKS5 proxy |
+| `OBSCURA_SCRIPT_DEADLINE_MS` | 30000 | Whole script phase; raise for a heavy SPA shell |
+| `OBSCURA_NAV_TIMEOUT_MS` | 30000 | Per-navigation ceiling, applied to the whole chain |
+| `OBSCURA_NAV_CHAIN_LIMIT` | 10 | Documents per navigation chain (stops redirect loops) |
+| `OBSCURA_FETCH_TIMEOUT_MS` | 30000 | Script `fetch()` / XHR / module requests |
+| `OBSCURA_MODULE_BUDGET_MS` | 3000 | Per-module budget for progressive enhancement |
+| `OBSCURA_CDP_COMMAND_TIMEOUT_MS` | 60000 | Per-CDP-command V8 deadline; `0` disables |
+| `OBSCURA_ALLOW_PRIVATE_NETWORK`, `OBSCURA_PROXY`, `OBSCURA_TIMEZONE`, `OBSCURA_PROFILE`, `OBSCURA_ROTATE_PROFILE`, `OBSCURA_GEOLOCATION`, `OBSCURA_BLOCK_TRACKERS`, `OBSCURA_CDP_TOKEN`, `OBSCURA_MCP_TOKEN` | — | as described above |
 
-For script-friendly output, suppress progress messages:
+Also `--v8-flags "--max-old-space-size=2048"` (default old-generation ceiling
+4 GB) and `RUST_LOG=obscura=debug`, or `--verbose`, for logs on stderr.
 
-```bash
-obscura scrape https://example.com \
-  --quiet \
-  --format json
-```
+## Expectations and troubleshooting
 
-A proxy can be supplied globally and is inherited by scrape workers:
+Not a Chrome build: service workers, native media, WebGL
+(`canvas.getContext('webgl')` returns `null`), some Web APIs, long-tail CSS and
+compositor effects, and platform font rasterization can differ.
 
-```bash
-obscura --proxy http://127.0.0.1:8080 \
-  scrape https://example.com https://news.ycombinator.com
-```
+When output looks wrong:
 
-## Start the CLI's CDP server
+1. Confirm navigation succeeded and the output is nonempty or the PNG nonblank.
+2. Inspect the DOM with `--dump html` or `--eval` instead of guessing.
+3. Add an explicit `--wait-until` and/or `--wait`.
+4. Simplify the URL or the expression; reduce a real-site failure to a fixture.
+5. Use `--dump original` only when the raw bytes are what you want — it skips
+   JavaScript entirely.
 
-Use `serve` to start Obscura's Chrome DevTools Protocol (CDP) WebSocket
-server:
+## Docs
 
-```bash
-obscura serve --port 9222
-```
-
-Supported server options:
-
-| Option | Default | Purpose |
-|---|---:|---|
-| `--port <PORT>` | `9222` | CDP WebSocket listening port |
-| `--proxy <URL>` | — | HTTP or SOCKS5 proxy |
-| `--stealth` | off | Enable anti-detection and tracker blocking |
-| `--workers <N>` | `1` | Number of parallel worker processes |
-| `--obey-robots` | off | Respect `robots.txt` |
-
-The server command is operated through the CLI and exposes CDP for browser
-clients. This skill documents starting and configuring the server, not
-Puppeteer, Playwright, or raw CDP client APIs.
-
-## Proxy and stealth operation
-
-Use HTTP or SOCKS5 proxies:
-
-```bash
-obscura --proxy http://127.0.0.1:8080 \
-  fetch https://example.com --dump text
-
-obscura --proxy socks5://127.0.0.1:1080 \
-  fetch https://example.com --dump text
-```
-
-Enable stealth mode for anti-detection behavior and tracker blocking:
-
-```bash
-obscura --stealth fetch https://example.com --dump text
-obscura serve --port 9222 --stealth
-```
-
-Stealth mode provides a consistent browser identity, masks
-`navigator.webdriver`, masks patched native functions, and blocks the built-in
-tracker-domain list. It requires a stealth-capable Obscura installation.
-
-Use `--obey-robots` when the workflow must respect `robots.txt`:
-
-```bash
-obscura serve --port 9222 --obey-robots
-```
-
-## JavaScript-heavy pages
-
-Pass raw V8 flags with `--v8-flags`. A common use is increasing the JavaScript
-heap limit:
-
-```bash
-obscura --v8-flags "--max-old-space-size=4096" \
-  fetch https://example.com
-```
-
-For heavy single-page applications using the CLI server, increase the script
-execution budget when necessary:
-
-```bash
-OBSCURA_SCRIPT_DEADLINE_MS=60000 \
-  obscura serve --port 9222
-```
-
-The default script execution budget is 30 seconds. The deadline only affects
-pages that continue executing scripts; pages that finish sooner return
-normally.
-
-## Output and timing guidelines
-
-- Use `--dump html`, `text`, `links`, or `markdown` for DOM-oriented extraction.
-- Use `--eval` for a targeted value rather than parsing an entire page.
-- Use `--dump assets` to inspect referenced sub-resources.
-- Use `--dump original` for raw, binary-safe response bodies.
-- Use `--output` when another process needs a file instead of stdout.
-- Use `--quiet` when stdout or stderr must remain script-friendly.
-- Use `--wait-until networkidle0` for pages whose useful content arrives after
-  initial DOM construction.
-- Use `--wait` when a page needs additional settling after its lifecycle event.
-- Use `--timeout` to prevent slow or broken navigation from running
-  indefinitely.
-- Use screenshots only when rendered visual output is required.
-
-## Rendering expectations
-
-Obscura is an independent browser engine rather than a bundled Chromium build.
-It supports common layout, paint, JavaScript, screenshot, and extraction paths,
-but long-tail CSS, some Web APIs, media playback, compositor effects, and
-platform font rasterization can differ from Chromium.
-
-When a result looks incorrect:
-
-1. Confirm navigation succeeded.
-2. Confirm the output is nonempty.
-3. Try an explicit `--wait-until` or `--wait`.
-4. Use `--eval` or `--dump html` to inspect the loaded DOM.
-5. Use `--dump original` only when raw response data is intended.
-6. Reduce complicated pages to a simpler URL or extraction expression.
+Upstream docs go deeper than this file:
+https://github.com/h4ckf0r0day/obscura/tree/main/docs — CLI reference,
+environment variables, extraction, stealth and proxies, MCP, Puppeteer and
+Playwright, production deployment.

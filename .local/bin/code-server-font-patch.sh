@@ -1,88 +1,93 @@
 #!/usr/bin/env bash
 #
-# code-server-font-patch.sh — 让手机浏览器里的 code-server 终端用上本机 Nerd Font
+# code-server-font-patch.sh — give the code-server terminal in a phone browser a real Nerd Font
 #
-# ── 它解决什么问题 ───────────────────────────────────────────────────────────
-# code-server 的界面是在【客户端浏览器】里渲染的，CSS 的 font-family 找的是
-# 浏览器能访问到的字体。你在服务器（本机）装了 Maple Mono NF CN，桌面版 VS Code
-# 能看到；但手机浏览器没有这个字体文件，于是回退到系统字体 —— Nerd Font 图标
-# 全变豆腐块。
+# ── What problem this solves ─────────────────────────────────────────────────
+# code-server renders its UI in the *client* browser, and CSS font-family resolves
+# against fonts that browser can reach. This machine has Maple Mono NF CN installed,
+# so desktop VS Code finds it — but a phone browser has no such font file and falls
+# back to a system font, turning every Nerd Font glyph into a tofu block.
 #
-# 所以必须把字体【送到浏览器那边】。code-server 本身没有“把服务器字体推给客户端”
-# 的功能（官方 issue #1374 / #7557 还开着），只能用 workaround：
-#   把字体做成 woff2，放进 code-server 自己的静态目录，再用 @font-face 声明。
-# 因为字体和页面同源，CSP 的 `font-src 'self'` 天然放行，无需改 CSP。
+# So the font has to be shipped to the browser. code-server has no "push a server
+# font to the client" feature (upstream issues #1374 / #7557 are still open), so the
+# only workaround is: convert the font to woff2, drop it into code-server's own
+# static directory, and declare it with @font-face. Font and page share an origin, so
+# CSP's `font-src 'self'` already allows it — no CSP changes needed.
 #
-# ── 它具体做什么 ─────────────────────────────────────────────────────────────
-#   1. 决定目标目录：本次安装的精确目录 / latest 软链 / $CODE_SERVER_ROOT（见步骤 1）
-#   2. 把本机 fonts 下的 Maple Mono NF CN（Regular/Bold）转成 woff2（20MB → ~6MB，
-#      省流量）
-#   3. 复制到 code-server 的 workbench 目录下 ./fonts/
-#   4. 往 workbench.css 追加 @font-face 规则（同源相对路径 ./fonts/...）
+# ── What it actually does ────────────────────────────────────────────────────
+#   1. Pick the target directory: exact install dir / latest symlink / $CODE_SERVER_ROOT
+#      (see step 1)
+#   2. Convert Maple Mono NF CN (Regular/Bold) from the local fonts dir to woff2
+#      (20MB → ~6MB, saves bandwidth)
+#   3. Copy them into code-server's workbench directory as ./fonts/
+#   4. Append @font-face rules to workbench.css (same-origin relative ./fonts/...)
 #
-# ── 什么时候跑 ───────────────────────────────────────────────────────────────
-#   安装 / 升级 code-server 之后。因为改的是 mise 装的 code-server 文件，
-#   `mise upgrade` 会覆盖掉，需要重跑。config.toml 里给 code-server 配了 tool-level
-#   postinstall（只在这个工具真正安装/升级时触发，别的工具安装不会叫它），
-#   也可以手动跑本脚本。
+# ── When it runs ─────────────────────────────────────────────────────────────
+#   After installing / upgrading code-server: the patched files live inside the mise
+#   install, so `mise upgrade` overwrites them. config.toml gives that tool a
+#   tool-level postinstall (fires only for its own real install/upgrade, not when
+#   other tools install). It can also be run by hand.
 #
-# ── 环境变量 ─────────────────────────────────────────────────────────────────
-#   CODE_SERVER_ROOT        显式指定 code-server 安装根目录。优先级最高（步骤 1）。
-#   MISE_TOOL_INSTALL_PATH  mise tool-level postinstall 注入的“本次安装的精确目录”。
+# ── Environment variables ────────────────────────────────────────────────────
+#   CODE_SERVER_ROOT        Explicit code-server install root. Highest priority (step 1).
+#   MISE_TOOL_INSTALL_PATH  Exact install dir for this run, injected by mise's
+#                           tool-level postinstall.
 #
-# ── 用法 ─────────────────────────────────────────────────────────────────────
+# ── Usage ────────────────────────────────────────────────────────────────────
 #   ~/.local/bin/code-server-font-patch.sh
-#   然后重启 code-server（或至少刷新浏览器页面）。
+#   Then restart code-server (or at least reload the browser page).
 #
 set -euo pipefail
 
-# ── 常量 ──────────────────────────────────────────────────────────────────────
-BACKEND_DIR="github-coder-code-server"          # installs/ 下的目录名（mise 把 backend id 里的 ':' 和 '/' 换成 '-'）
-SRC="$HOME/.local/share/fonts"                   # 本机已安装字体的来源
+# ── Constants ────────────────────────────────────────────────────────────────
+BACKEND_DIR="github-coder-code-server"          # dir under installs/ (mise turns ':' and '/' in the backend id into '-')
+SRC="$HOME/.local/share/fonts"                  # where the locally installed fonts live
 FONT_NAME="Maple Mono NF CN"
-CSS_MARKER="CUSTOM WEBFONT: ${FONT_NAME}"        # 幂等标记：已注入就跳过
+CSS_MARKER="CUSTOM WEBFONT: ${FONT_NAME}"       # idempotence marker: skip if already injected
 
-# ── 1. 决定目标目录（CS = code-server 安装根目录）─────────────────────────────
-# 优先级从高到低：
-#   1) CODE_SERVER_ROOT          显式指定（手动跑时用）
-#   2) MISE_TOOL_INSTALL_PATH    mise tool-level postinstall 注入的本次安装精确目录
-#   3) installs/<backend>/latest 浮动软链（手动跑、且上面两个都没给时的兜底）
+# ── 1. Pick the target directory (CS = code-server install root) ─────────────
+# Priority, highest first:
+#   1) CODE_SERVER_ROOT          explicitly set (manual runs)
+#   2) MISE_TOOL_INSTALL_PATH    exact install dir for this run, injected by mise
+#   3) installs/<backend>/latest floating symlink (manual runs, neither of the above)
 #
-# 为什么 hook 场景必须走第 2 条、不能直接用 latest：postinstall 是在工具文件落地之后、
-# mise 重建 floating runtime symlink（latest 及各版本前缀，由
-# runtime_symlinks::generated_names_for 生成）之前跑的。此刻 latest 要么还不存在
-# （首次安装），要么还指着上一个版本（升级）——照着它打补丁会静默空转或打到旧版本。
-# MISE_TOOL_INSTALL_PATH 就是 mise 为这个坑准备的精确目录。
+# Why the hook path must use (2) and never `latest`: postinstall runs after the tool's
+# files land, but before mise rebuilds its floating runtime symlinks (latest and the
+# version prefixes, generated by runtime_symlinks::generated_names_for). At that moment
+# `latest` either does not exist yet (first install) or still points at the previous
+# version (upgrade), so patching through it silently does nothing or patches the old
+# version. MISE_TOOL_INSTALL_PATH is the exact dir mise provides for this.
 CS="${CODE_SERVER_ROOT:-${MISE_TOOL_INSTALL_PATH:-}}"
 [ -n "$CS" ] || CS="$HOME/.local/share/mise/installs/$BACKEND_DIR/latest"
-echo "目标目录：$CS" >&2
+echo "target: $CS" >&2
 
-WB="$CS/lib/vscode/out/vs/code/browser/workbench"   # code-server 服务 workbench.css 的目录
-FONTDIR="$WB/fonts"                                  # 字体放这里，与 workbench.css 同源
+WB="$CS/lib/vscode/out/vs/code/browser/workbench"   # dir code-server serves workbench.css from
+FONTDIR="$WB/fonts"                                 # fonts live here, same origin as workbench.css
 
-# workbench 目录不存在 = 这不是 code-server 安装（或路径不对），直接放过，别让 hook 报错
+# No workbench dir = not a code-server install (or wrong path): pass through, never fail a hook on it
 if [ ! -d "$WB" ]; then
-  echo "跳过：$CS 下未找到 workbench 目录（code-server 未安装或目标目录不对）" >&2
+  echo "skip: no workbench dir under $CS (code-server not installed, or wrong target)" >&2
   exit 0
 fi
 
-# ── 2. 转 woff2 ───────────────────────────────────────────────────────────────
-# 用 uvx 临时拉起 fonttools + brotli 做压缩，无需全局安装。
-# 仅在源字体比产物新时才重转，重复跑很快。
+# ── 2. Convert to woff2 ──────────────────────────────────────────────────────
+# uvx pulls fonttools + brotli on the fly, nothing installed globally.
+# Only re-converts when the source font is newer than the artifact, so reruns are fast.
 mkdir -p "$FONTDIR"
 for w in Regular Bold; do
   ttf="$SRC/MapleMono-NF-CN-$w.ttf"
   out="$FONTDIR/MapleMono-NF-CN-$w.woff2"
-  [ -f "$ttf" ] || { echo "缺少字体: $ttf" >&2; exit 1; }
+  [ -f "$ttf" ] || { echo "missing font: $ttf" >&2; exit 1; }
   if [ ! -f "$out" ] || [ "$ttf" -nt "$out" ]; then
-    echo "转换 $w ..."
+    echo "converting $w ..."
     uvx --with brotli fonttools ttLib.woff2 compress -o "$out" "$ttf" >/dev/null
   fi
 done
 
-# ── 3. 注入 @font-face ────────────────────────────────────────────────────────
-# font-display: block —— 终端对字体度量敏感，宁可短暂等待也别先渲染成回退字体。
-# 若已注入（标记存在），跳过，保证幂等。
+# ── 3. Inject @font-face ─────────────────────────────────────────────────────
+# font-display: block — terminals are picky about font metrics; better to wait briefly
+# than to render with the fallback font first.
+# Skipped when the marker is already there, which keeps the script idempotent.
 if ! grep -q "$CSS_MARKER" "$WB/workbench.css"; then
   cat >> "$WB/workbench.css" <<CSS
 
@@ -102,9 +107,9 @@ if ! grep -q "$CSS_MARKER" "$WB/workbench.css"; then
   font-display: block;
 }
 CSS
-  echo "已注入 @font-face"
+  echo "injected @font-face"
 else
-  echo "@font-face 已存在，跳过"
+  echo "@font-face already present, skipping"
 fi
 
-echo "完成。重启 code-server 并刷新浏览器即可。"
+echo "done. restart code-server and reload the browser page."

@@ -16,8 +16,8 @@ fzf = "latest"
 gh = "latest"
 "github:Huseynteymurzade28/pokeductor" = { version = "latest", matching = "musl" }
 "github:YS-L/csvlens" = "latest"
-# "github:coder/code-server" 定义在文件末尾的 [tools."github:coder/code-server"]
-# （要带多行 postinstall，inline table 写不下）
+# "github:coder/code-server" is defined at the end of this file, in
+# [tools."github:coder/code-server"] (it needs a multi-line postinstall; inline tables cannot span lines)
 "github:h4ckf0r0day/obscura" = { version = "latest", asset_pattern = "obscura-x86_64-linux-stealth.tar.gz" }
 "github:iOfficeAI/OfficeCLI" = "latest"
 "github:ilovealienz/stremio-cliuwu" = "latest"
@@ -52,15 +52,18 @@ yazi = "latest"
 yt-dlp = { version = "latest", rename_exe = "yt-dlp" }
 zoxide = "latest"
 
-# code-server 装/升级后往它的 workbench.css 注入本机 Nerd Font（详见
-# ~/.local/bin/code-server-font-patch.sh）。用 tool-level postinstall 而不是
-# [hooks] postinstall：
-#   * 只在这个工具真正安装/升级时触发，别的工具安装不会把它叫起来（when 默认 install）；
-#   * mise 会注入 MISE_TOOL_INSTALL_PATH（本次安装的精确目录）。不能用
-#     installs/…/latest：postinstall 跑在 mise 重建 floating runtime symlink 之前，
-#     此刻 latest 要么还不存在（首次安装），要么还指着上一版（升级）。
-# 副作用：脚本失败（字体缺失、uvx 失败）会让这次 code-server 安装报错——这是故意的，
-# 总比默默不生效、下次升级才发现要好。脚本不存在时只警告，不拖垮安装。
+# Injects this machine's Nerd Font into code-server's workbench.css once the tool is
+# installed/upgraded (see ~/.local/bin/code-server-font-patch.sh). Uses a tool-level
+# postinstall instead of [hooks] postinstall:
+#   * fires only for this tool's real install/upgrade, never when other tools install
+#     (when defaults to install);
+#   * mise injects MISE_TOOL_INSTALL_PATH, the exact install dir for this run. `latest`
+#     is not usable here: postinstall runs before mise rebuilds its floating runtime
+#     symlinks, so latest either does not exist yet (first install) or still points at
+#     the previous version (upgrade).
+# Trade-off: a failing script (missing font, uvx failure) fails this code-server install
+# — on purpose, since silently doing nothing is exactly how this broke before. A missing
+# script only warns and never breaks the install.
 [tools."github:coder/code-server"]
 version = "latest"
 postinstall = '''
@@ -68,7 +71,7 @@ script="$HOME/.local/bin/code-server-font-patch.sh"
 if [ -x "$script" ]; then
   "$script"
 else
-  echo 'code-server-font-patch.sh 不存在，跳过字体注入' >&2
+  echo 'code-server-font-patch.sh not found, skipping font injection' >&2
 fi
 '''
 

@@ -47,11 +47,11 @@ System upgrades are handled via the `topgrade` config in `.config/topgrade.toml`
 
 ## 🗂️ What's managed
 
-| Path                                                                                                                                            | Purpose                                                     |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `.bash_profile`, `.bashrc`, `.bashrc.d/`                                                                                                        | Shell setup                                                 |
-| `.config/btop`, `.config/ghostty`, `.config/lazygit`, `.config/mpv`, `.config/nvim`, `.config/starship.toml`, `.config/yazi`, `.config/neovide` | App configs                                                 |
-| `.config/mise`, `.config/topgrade.toml`                                                                                                         | Tool / upgrade management                                   |
-| `.local/bin/code-server-font-patch.sh`                                                                                                          | Inject Nerd Font into the code-server workbench             |
-| `.pi/agent/`                                                                                                                                    | Pi agent settings, keybindings, extensions, prompts, skills |
-| `.gitconfig`                                                                                                                                    | Git config                                                  |
+| Path                                                                                                                                                             | Purpose                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `.bash_profile`, `.bashrc`, `.bashrc.d/`                                                                                                                         | Shell setup                                                         |
+| `.config/btop`, `.config/delta`, `.config/ghostty`, `.config/lazygit`, `.config/mpv`, `.config/nvim`, `.config/starship.toml`, `.config/yazi`, `.config/neovide` | App configs                                                         |
+| `.config/mise`, `.config/topgrade.toml`                                                                                                                          | Tool / upgrade management                                           |
+| `.local/bin/code-server-font-patch.sh`                                                                                                                           | Inject Nerd Font into the code-server workbench                     |
+| `.pi/agent/`                                                                                                                                                     | Pi agent settings, keybindings, models, extensions, prompts, skills |
+| `.gitconfig`                                                                                                                                                     | Git config                                                          |

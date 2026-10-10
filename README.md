@@ -8,7 +8,8 @@ Linux with `bash`, `curl`, and `tar` (with `xz` support) (`fc-cache` is optional
 used to refresh the font cache when available).
 
 No manual mise installation is needed — `bootstrap.sh` installs mise to
-`~/.local/bin/mise` (override with `MISE_INSTALL_PATH`).
+`~/.local/bin/mise` (override with `MISE_INSTALL_PATH`; the override stays
+discoverable on `PATH` via a `~/.local/bin/mise` symlink).
 
 ## 📥 Getting started
 

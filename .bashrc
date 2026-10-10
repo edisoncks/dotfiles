@@ -40,7 +40,9 @@ if command -v mise >/dev/null 2>&1; then
 fi
 
 # Starship
-if command -v starship >/dev/null 2>&1; then
+# Skip when starship_precmd is already defined: re-sourcing this file must not
+# stack another starship_precmd element onto PROMPT_COMMAND.
+if command -v starship >/dev/null 2>&1 && ! declare -f starship_precmd >/dev/null 2>&1; then
   eval "$(starship init bash)"
 fi
 

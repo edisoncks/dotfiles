@@ -33,14 +33,18 @@ _onefetch_on_cd() {
   command onefetch || true
 }
 
-# Register, preserving any existing PROMPT_COMMAND.
+# Register, preserving any existing PROMPT_COMMAND, and stay idempotent when
+# this file is sourced again (e.g. a re-sourced ~/.bashrc): never append the
+# hook twice. The OSC7 block in ~/.bashrc uses the same guard style.
 # Bash 5.1+ runs every array element; older bash only runs the scalar value /
 # element 0, so write into element 0 there instead of appending a new element.
 if (( BASH_VERSINFO[0] > 5 || (BASH_VERSINFO[0] == 5 && BASH_VERSINFO[1] >= 1) )); then
   PROMPT_COMMAND=${PROMPT_COMMAND-}
-  PROMPT_COMMAND+=(_onefetch_on_cd)
+  [[ " ${PROMPT_COMMAND[*]} " == *" _onefetch_on_cd "* ]] || PROMPT_COMMAND+=(_onefetch_on_cd)
 else
-  # Drop trailing whitespace/semicolons so we never build an invalid ";;".
-  PROMPT_COMMAND="${PROMPT_COMMAND%"${PROMPT_COMMAND##*[![:space:];]}"}"
-  PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}_onefetch_on_cd"
+  if [[ "${PROMPT_COMMAND:-}" != *"_onefetch_on_cd"* ]]; then
+    # Drop trailing whitespace/semicolons so we never build an invalid ";;".
+    PROMPT_COMMAND="${PROMPT_COMMAND%"${PROMPT_COMMAND##*[![:space:];]}"}"
+    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND;}_onefetch_on_cd"
+  fi
 fi

@@ -51,7 +51,9 @@ merely restates the request.
 
 - Revise on request: send a complete replacement plan, never a delta.
 - Nothing new to decide? Say so and keep the plan as it stands.
-- Never end a turn with "here's what I'm about to plan" — present the plan.
+- Never end a turn announcing a plan you have not written — present the plan.
+- Finish the turn with one short line naming the person's options: approve it
+  and you implement, reply with changes, or drop it. Not a bare "shall I
+  proceed?" — that asks for a decision without saying what the choices are,
+  and leaves someone who has not seen this workflow before stuck.
 - When the plan is approved, implement it. Then plan mode is over.
-
-Do not ask "shall I proceed?" — the plan itself is the thing to approve.

@@ -18,6 +18,23 @@ if ! mise_ready; then
   exit 1
 fi
 
+# Keep mise discoverable on PATH. ~/.bashrc activates mise via `command -v
+# mise`, and the only directories it guarantees on PATH are ~/.local/bin and
+# ~/bin. With MISE_INSTALL_PATH pointed anywhere else, new shells would never
+# find it, so point ~/.local/bin/mise at the real binary (backing up anything
+# that already sits there, like the dotfiles loop below).
+MISE_SHIM="$HOME/.local/bin/mise"
+if [ "$MISE_INSTALL_PATH" != "$MISE_SHIM" ]; then
+  mkdir -p "$(dirname "$MISE_SHIM")"
+  if [ -e "$MISE_SHIM" ] && [ ! -L "$MISE_SHIM" ]; then
+    shim_backup="$MISE_SHIM.bak.$(date +%s)"
+    mv "$MISE_SHIM" "$shim_backup"
+    echo "🗂️  Backed up ~/.local/bin/mise to $shim_backup"
+  fi
+  ln -sfn "$MISE_INSTALL_PATH" "$MISE_SHIM"
+  echo "✅ Linked ~/.local/bin/mise -> $MISE_INSTALL_PATH"
+fi
+
 # Symlink dotfiles
 DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)
 declare -a DOTFILES=(

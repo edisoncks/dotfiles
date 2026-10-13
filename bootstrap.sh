@@ -50,6 +50,7 @@ declare -a DOTFILES=(
   ".config/starship.toml"
   ".config/topgrade.toml"
   ".config/yazi"
+  ".pi/agent/AGENTS.md"
   ".pi/agent/settings.json"
   ".pi/agent/keybindings.json"
   ".pi/agent/models.json"

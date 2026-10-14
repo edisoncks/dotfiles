@@ -58,6 +58,7 @@ declare -a DOTFILES=(
   ".pi/agent/prompts"
   ".pi/agent/skills"
   ".local/bin/code-server-font-patch.sh"
+  ".local/bin/fzf-preview.sh"
   ".bash_profile"
   ".bashrc"
   ".gitconfig"

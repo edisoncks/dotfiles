@@ -50,6 +50,12 @@ declare -a DOTFILES=(
   ".config/starship.toml"
   ".config/topgrade.toml"
   ".config/yazi"
+  ".dsh/AGENTS.md"
+  ".dsh/dsh-pet/main-config.jsonc"
+  ".dsh/profiles/web/package.json"
+  ".dsh/profiles/web/pnpm-lock.yaml"
+  ".dsh/profiles/web/pnpm-workspace.yaml"
+  ".dsh/skills"
   ".pi/agent/AGENTS.md"
   ".pi/agent/settings.json"
   ".pi/agent/keybindings.json"
@@ -157,6 +163,23 @@ fi
 # finds both the font files above and uvx.
 "$MISE_INSTALL_PATH" install
 echo "✅ Installed mise tools"
+
+# Install the DSH web profile plugins. DSH never installs plugins on boot: a
+# profile whose bundle is missing from node_modules is skipped with a warning
+# and the app starts without it (see resolveBundleDir in @deepseek-ai/dsh-app-boot).
+# The profile's package.json / pnpm-workspace.yaml / pnpm-lock.yaml are symlinked
+# from this repository above, so a fresh machine has the plugin list but not the
+# packages. Guarded on node_modules: an existing install is left alone, and
+# "dsh plugin add" refreshes it interactively anyway.
+DSH_WEB_PROFILE="$HOME/.dsh/profiles/web"
+if command -v dsh >/dev/null 2>&1 && [ -f "$DSH_WEB_PROFILE/package.json" ] && [ ! -d "$DSH_WEB_PROFILE/node_modules" ]; then
+  echo "⌛ Installing DSH web profile plugins..."
+  if dsh plugin --profile web install; then
+    echo "✅ Installed DSH web profile plugins"
+  else
+    echo "⚠️  DSH plugin install failed — run 'dsh plugin --profile web install' after fixing the error above" >&2
+  fi
+fi
 
 # Install yazi flavors/plugins from the locked package.toml (flavors/ is ignored, not vendored)
 ya pkg install || echo "⚠️  yazi package install failed (offline?) — run 'ya pkg install' later"

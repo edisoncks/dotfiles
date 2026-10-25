@@ -2,3 +2,16 @@ node_modules
 .config/mpv/shaders/*
 !.config/mpv/shaders/.gitkeep
 .config/yazi/flavors/
+
+# DSH runtime state — never commit. The only tracked DSH files are
+# .dsh/profiles/web/{package.json,pnpm-workspace.yaml,pnpm-lock.yaml} and
+# .dsh/dsh-pet/main-config.jsonc; everything below is machine-local.
+.dsh/.credentials.yaml
+.dsh/.anonymous-user-id
+.dsh/attachments/
+.dsh/electron/
+.dsh/logs/
+.dsh/sessions/
+.dsh/storages/
+.dsh/profiles/*/.plugin-manager/
+.dsh/dsh-pet/memory.json

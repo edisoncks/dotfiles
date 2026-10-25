@@ -52,9 +52,7 @@ declare -a DOTFILES=(
   ".config/yazi"
   ".dsh/AGENTS.md"
   ".dsh/dsh-pet/main-config.jsonc"
-  ".dsh/profiles/web/package.json"
-  ".dsh/profiles/web/pnpm-lock.yaml"
-  ".dsh/profiles/web/pnpm-workspace.yaml"
+  ".dsh/profiles/web"
   ".dsh/skills"
   ".pi/agent/AGENTS.md"
   ".pi/agent/settings.json"
@@ -167,10 +165,12 @@ echo "✅ Installed mise tools"
 # Install the DSH web profile plugins. DSH never installs plugins on boot: a
 # profile whose bundle is missing from node_modules is skipped with a warning
 # and the app starts without it (see resolveBundleDir in @deepseek-ai/dsh-app-boot).
-# The profile's package.json / pnpm-workspace.yaml / pnpm-lock.yaml are symlinked
-# from this repository above, so a fresh machine has the plugin list but not the
-# packages. Guarded on node_modules: an existing install is left alone, and
-# "dsh plugin add" refreshes it interactively anyway.
+# The whole profile directory is symlinked from this repository above, so a fresh
+# machine has the plugin list but not the packages. Link the *directory*, never
+# the individual files: pnpm refuses to write a lockfile that is itself a
+# symlink ("Refusing to write symlinked lockfile"), which breaks
+# "dsh plugin add". Guarded on node_modules: an existing install is left alone,
+# and "dsh plugin add" refreshes it interactively anyway.
 DSH_WEB_PROFILE="$HOME/.dsh/profiles/web"
 if command -v dsh >/dev/null 2>&1 && [ -f "$DSH_WEB_PROFILE/package.json" ] && [ ! -d "$DSH_WEB_PROFILE/node_modules" ]; then
   echo "⌛ Installing DSH web profile plugins..."

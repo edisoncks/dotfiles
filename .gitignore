@@ -3,9 +3,11 @@ node_modules
 !.config/mpv/shaders/.gitkeep
 .config/yazi/flavors/
 
-# DSH runtime state — never commit. The only tracked DSH files are
+# DSH runtime state — never commit. The tracked DSH files are
 # .dsh/profiles/web/{package.json,pnpm-workspace.yaml,pnpm-lock.yaml} and
 # .dsh/dsh-pet/main-config.jsonc; everything below is machine-local.
+# bootstrap.sh symlinks the whole .dsh/profiles/web directory, so runtime
+# content lands in the repo directory too and has to be ignored here.
 .dsh/.credentials.yaml
 .dsh/.anonymous-user-id
 .dsh/attachments/
@@ -14,4 +16,7 @@ node_modules
 .dsh/sessions/
 .dsh/storages/
 .dsh/profiles/*/.plugin-manager/
+.dsh/profiles/*/node_modules/
+.dsh/profiles/*/cordis.yml
+.dsh/profiles/*/cordis.patch.yml
 .dsh/dsh-pet/memory.json

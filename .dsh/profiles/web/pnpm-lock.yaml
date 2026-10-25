@@ -18,8 +18,8 @@ importers:
         specifier: ^0.3.8
         version: 0.3.8(undici@7.30.1)
       dsh-whale-preset:
-        specifier: github:edisoncks/dsh-whale-preset#v1.0.0
-        version: https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/3a48dab4e06c9da900bfa6ada0135067e72d47ac
+        specifier: github:edisoncks/dsh-whale-preset#v1.0.1
+        version: https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/375502a2dcddc789afbdabae51164010835fa981
 
 packages:
 
@@ -96,9 +96,9 @@ packages:
       react: ^18.2.0
       react-dom: ^18.2.0
 
-  dsh-whale-preset@https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/3a48dab4e06c9da900bfa6ada0135067e72d47ac:
-    resolution: {gitHosted: true, integrity: sha512-eLFcz/ePOOzl3FbTT2H5DPlkWlPWXK2mGj1sVG/rEKttiYiZt7CX5zWS+XNpDWQ3++vslldx5Se2J8Mpj/mcUw==, tarball: https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/3a48dab4e06c9da900bfa6ada0135067e72d47ac}
-    version: 1.0.0
+  dsh-whale-preset@https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/375502a2dcddc789afbdabae51164010835fa981:
+    resolution: {gitHosted: true, integrity: sha512-gjkBVu2xBP6RwF9OOn8DiY0O7TkAWuu0OvUxn7QsB+FZF/zWWsKtrJB149URuVAV4Vp6EnqRio/kwRmxgPyJSA==, tarball: https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/375502a2dcddc789afbdabae51164010835fa981}
+    version: 1.0.1
 
   env-paths@3.0.0:
     resolution: {integrity: sha512-dtJUTepzMW3Lm/NPxRf3wP4642UWhjL2sQxc+ym2YMj1m/H2zDNQOlezafzkHwn6sMstjHTwG6iQQsctDW/b1A==}
@@ -232,7 +232,7 @@ snapshots:
       - undici
       - ws
 
-  dsh-whale-preset@https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/3a48dab4e06c9da900bfa6ada0135067e72d47ac: {}
+  dsh-whale-preset@https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/375502a2dcddc789afbdabae51164010835fa981: {}
 
   env-paths@3.0.0: {}
 

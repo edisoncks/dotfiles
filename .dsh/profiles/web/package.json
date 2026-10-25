@@ -17,6 +17,6 @@
     "dsh-better-session-title": "github:xinspark/dsh-better-session-title#v1.3.1",
     "dsh-cookie-renew": "github:edisoncks/dsh-cookie-renew#v1.0.0",
     "dsh-pet": "^0.3.8",
-    "dsh-whale-preset": "github:edisoncks/dsh-whale-preset#v1.0.0"
+    "dsh-whale-preset": "github:edisoncks/dsh-whale-preset#v1.0.1"
   }
 }

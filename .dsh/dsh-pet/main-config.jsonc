@@ -29,7 +29,7 @@
     "petCollision": false
   },
   "font": {
-    "family": "candy",
+    "family": "yahei",
     "size": 21,
     "followPet": true
   },

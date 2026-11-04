@@ -104,6 +104,17 @@ NERD_FONTS_VERSION="v3.5.1"
 MAPLE_FONT_VERSION="v7.9"
 FONT_DIR="$HOME/.local/share/fonts"
 
+# 7-Zip and unzip report non-fatal warnings (skipped entries, etc.) as exit 1.
+# Under `set -e` that would abort the whole bootstrap, so accept 0-1, fail the rest.
+extract_or_die() {
+  local rc=0
+  "$@" || rc=$?
+  if [ "$rc" -gt 1 ]; then
+    echo "❌ $1 extraction failed (exit $rc)" >&2
+    exit 1
+  fi
+}
+
 # Mononoki Nerd Font
 FONT_MARKER="$FONT_DIR/.mononoki-nerd-font.version"
 if [ -f "$FONT_MARKER" ] && [ "$(cat "$FONT_MARKER")" = "$NERD_FONTS_VERSION" ]; then
@@ -140,11 +151,11 @@ else
       -o "$tmp/MapleMono-NF-CN-unhinted.zip" \
       "https://github.com/subframe7536/maple-font/releases/download/${MAPLE_FONT_VERSION}/MapleMono-NF-CN-unhinted.zip"
     if command -v 7zz >/dev/null 2>&1; then
-      7zz x -y -o"$FONT_DIR" "$tmp/MapleMono-NF-CN-unhinted.zip" '*.ttf' >/dev/null
+      extract_or_die 7zz x -y -o"$FONT_DIR" "$tmp/MapleMono-NF-CN-unhinted.zip" '*.ttf' >/dev/null
     elif command -v unzip >/dev/null 2>&1; then
-      unzip -q -o "$tmp/MapleMono-NF-CN-unhinted.zip" -d "$FONT_DIR" '*.ttf'
+      extract_or_die unzip -q -o "$tmp/MapleMono-NF-CN-unhinted.zip" -d "$FONT_DIR" '*.ttf'
     elif command -v 7z >/dev/null 2>&1; then
-      7z x -y -o"$FONT_DIR" "$tmp/MapleMono-NF-CN-unhinted.zip" '*.ttf' >/dev/null
+      extract_or_die 7z x -y -o"$FONT_DIR" "$tmp/MapleMono-NF-CN-unhinted.zip" '*.ttf' >/dev/null
     else
       echo "❌ 7zip or unzip is required to install Maple Mono NF CN" >&2
       exit 1

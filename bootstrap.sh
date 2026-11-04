@@ -119,10 +119,10 @@ else
       "https://github.com/ryanoasis/nerd-fonts/releases/download/${NERD_FONTS_VERSION}/Mononoki.tar.xz"
     tar -xJf "$tmp/Mononoki.tar.xz" -C "$FONT_DIR" --wildcards '*.ttf'
   )
-  printf '%s\n' "$NERD_FONTS_VERSION" >"$FONT_MARKER"
   if command -v fc-cache >/dev/null 2>&1; then
     fc-cache -f "$FONT_DIR" >/dev/null
   fi
+  printf '%s\n' "$NERD_FONTS_VERSION" >"$FONT_MARKER"
   echo "✅ Installed Mononoki Nerd Font $NERD_FONTS_VERSION into $FONT_DIR"
 fi
 
@@ -150,10 +150,10 @@ else
       exit 1
     fi
   )
-  printf '%s\n' "$MAPLE_FONT_VERSION" >"$MAPLE_FONT_MARKER"
   if command -v fc-cache >/dev/null 2>&1; then
     fc-cache -f "$FONT_DIR" >/dev/null
   fi
+  printf '%s\n' "$MAPLE_FONT_VERSION" >"$MAPLE_FONT_MARKER"
   echo "✅ Installed Maple Mono NF CN $MAPLE_FONT_VERSION into $FONT_DIR"
 fi
 

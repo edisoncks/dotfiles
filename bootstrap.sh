@@ -184,10 +184,14 @@ echo "✅ Installed mise tools"
 # machine has the plugin list but not the packages. Link the *directory*, never
 # the individual files: pnpm refuses to write a lockfile that is itself a
 # symlink ("Refusing to write symlinked lockfile"), which breaks
-# "dsh plugin add". Guarded on node_modules: an existing install is left alone,
-# and "dsh plugin add" refreshes it interactively anyway.
+# "dsh plugin add". Guarded on pnpm's install marker rather than on node_modules
+# itself: a half-written install still gets repaired here, and "dsh plugin add"
+# refreshes a good install interactively anyway.
 DSH_WEB_PROFILE="$HOME/.dsh/profiles/web"
-if command -v dsh >/dev/null 2>&1 && [ -f "$DSH_WEB_PROFILE/package.json" ] && [ ! -d "$DSH_WEB_PROFILE/node_modules" ]; then
+# pnpm writes .modules.yaml only after a completed install; the lockfile is
+# git-tracked, so its presence says nothing about the install.
+DSH_WEB_READY="$DSH_WEB_PROFILE/node_modules/.modules.yaml"
+if command -v dsh >/dev/null 2>&1 && [ -f "$DSH_WEB_PROFILE/package.json" ] && [ ! -f "$DSH_WEB_READY" ]; then
   echo "⌛ Installing DSH web profile plugins..."
   if dsh plugin --profile web install; then
     echo "✅ Installed DSH web profile plugins"

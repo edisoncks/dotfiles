@@ -114,7 +114,9 @@ extract_or_die() {
   local rc=0
   "$@" || rc=$?
   if [ "$rc" -gt 1 ]; then
-    echo "❌ $1 extraction failed (exit $rc)" >&2
+    printf '❌ extraction failed (exit %d):' "$rc" >&2
+    printf ' %q' "$@" >&2
+    printf '\n' >&2
     exit 1
   fi
 }

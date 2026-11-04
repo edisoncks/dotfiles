@@ -93,7 +93,11 @@ done
 echo "✅ Installed bootstrap prerequisites (7zip, uv)"
 
 # Activate mise: puts shims (7zz, uvx) on PATH for the steps below
-eval "$($MISE_INSTALL_PATH activate bash)"
+if ! activate_out="$("$MISE_INSTALL_PATH" activate bash)"; then
+  echo "❌ mise shell activation failed" >&2
+  exit 1
+fi
+eval "$activate_out"
 
 # Install fonts (pinned; idempotent via per-font version markers)
 # Must run before `mise install`: code-server's tool-level postinstall (see

@@ -31,7 +31,7 @@ lazydocker = "latest"
 lazygit = "latest"
 neovim = "latest"
 node = "26"
-"npm:@deepseek-ai/dsh" = "0.2.1-rc.3"
+"npm:@deepseek-ai/dsh" = "0.2.1-rc.5"
 "npm:@earendil-works/pi-coding-agent" = { version = "latest", minimum_release_age = "6h" }
 "npm:@playwright/cli" = "latest"
 "npm:prettier" = "latest"

@@ -15,13 +15,18 @@ importers:
         specifier: github:edisoncks/dsh-cookie-renew#v1.0.0
         version: https://codeload.github.com/edisoncks/dsh-cookie-renew/tar.gz/fd7ee48b03924893c2f4f3e9f954c1525ffe3ff0
       dsh-pet:
-        specifier: ^0.3.8
-        version: 0.3.8(undici@7.30.1)
+        specifier: ^0.4.3
+        version: 0.4.3(undici@7.30.1)(ws@8.22.1)
       dsh-whale-preset:
         specifier: github:edisoncks/dsh-whale-preset#v1.0.2
         version: https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/3fd8c4d380a2ca7ca721fd145fb34fe72a8c1468
 
 packages:
+
+  '@andresaya/edge-tts@1.9.1':
+    resolution: {integrity: sha512-40SXhBNvyNOAlGrroG7Is12vo4P0MNDV3GC6gaBcjoWvEbUx9CJy1KE1ZcK5XscWnYtZH/q9E4EI9QR0TYCaHQ==}
+    engines: {bun: '>=0.5.0'}
+    hasBin: true
 
   '@anthropic-ai/sdk@0.135.0':
     resolution: {integrity: sha512-WWrdL57JhU5KoynpTjt9GXK6k7ud9nPw2uw/Trn+oBXh6s0KpjhAccWZm2Qxw08ARYG1UDQj5iC+JO42j1rt/g==}
@@ -60,6 +65,10 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
+
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
@@ -78,8 +87,8 @@ packages:
     version: 1.0.0
     engines: {dsh: ^0.2.1-rc.3, node: '>=20'}
 
-  dsh-pet@0.3.8:
-    resolution: {integrity: sha512-E1ymE0/a1k2MJco2JDcWeqwMttjWNZWt5yMEN+jjKwWD+H2XT5OMUDmazMLhNnN5grmL9+lbE94iyEQMn5p+JA==}
+  dsh-pet@0.4.3:
+    resolution: {integrity: sha512-pKNt+rd9xHi5CaVsc7qDPJlKkX6GuzRC6h0k/2ckio6tZfZH21nPe+7GUC1fB3etDGLlZMTiaa/Q1F2ljdRxOw==}
     engines: {node: '>=22.12.0'}
     hasBin: true
     peerDependencies:
@@ -164,10 +173,30 @@ packages:
     resolution: {integrity: sha512-03KrMbjIFDWQR5RNPrSw3bd1r12JpyFQl9/yxjUbJtqkjmllqC5lFjZh6ujeuJCKr8EOQvRW872Oy/az+nLYxg==}
     engines: {node: '>=20.18.1'}
 
+  ws@8.22.1:
+    resolution: {integrity: sha512-oyL6OPYme/CmiFvNuGzeoxCJ4nOrZE2O1FwM9MWM1AsGri6nLXB2pg+lNA8aLeXMSav0J6eIVS1j6vUPzUtK9g==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   zod@4.6.7:
     resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
+
+  '@andresaya/edge-tts@1.9.1':
+    dependencies:
+      commander: 12.1.0
+      ws: 8.22.1
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   '@anthropic-ai/sdk@0.135.0(zod@4.6.7)':
     dependencies:
@@ -207,6 +236,8 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
+  commander@12.1.0: {}
+
   debug@4.4.3:
     dependencies:
       ms: 2.1.3
@@ -217,19 +248,22 @@ snapshots:
     dependencies:
       '@deepseek-ai/schemastery': 3.18.5
 
-  dsh-pet@0.3.8(undici@7.30.1):
+  dsh-pet@0.4.3(undici@7.30.1)(ws@8.22.1):
     dependencies:
+      '@andresaya/edge-tts': 1.9.1
       '@anthropic-ai/sdk': 0.135.0(zod@4.6.7)
       '@electron-internal/extract-zip': 1.0.6
       '@electron/get': 5.1.0
-      openai: 7.39.0(undici@7.30.1)(zod@4.6.7)
+      openai: 7.39.0(undici@7.30.1)(ws@8.22.1)(zod@4.6.7)
       zod: 4.6.7
     transitivePeerDependencies:
       - '@aws-sdk/credential-provider-node'
       - '@smithy/hash-node'
       - '@smithy/signature-v4'
+      - bufferutil
       - supports-color
       - undici
+      - utf-8-validate
       - ws
 
   dsh-whale-preset@https://codeload.github.com/edisoncks/dsh-whale-preset/tar.gz/3fd8c4d380a2ca7ca721fd145fb34fe72a8c1468: {}
@@ -247,9 +281,10 @@ snapshots:
 
   ms@2.1.3: {}
 
-  openai@7.39.0(undici@7.30.1)(zod@4.6.7):
+  openai@7.39.0(undici@7.30.1)(ws@8.22.1)(zod@4.6.7):
     optionalDependencies:
       undici: 7.30.1
+      ws: 8.22.1
       zod: 4.6.7
 
   progress@2.0.3: {}
@@ -271,5 +306,7 @@ snapshots:
 
   undici@7.30.1:
     optional: true
+
+  ws@8.22.1: {}
 
   zod@4.6.7: {}

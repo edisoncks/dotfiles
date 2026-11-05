@@ -3,3 +3,5 @@ packages:
 
 nodeLinker: hoisted
 autoInstallPeers: false
+minimumReleaseAgeExclude:
+  - dsh-pet@0.4.3

@@ -2,3 +2,5 @@
 - ALWAYS set a timeout in seconds — minimum 30s, larger if the command is expected to take longer when calling the bash tool.
 - NEVER run find, grep, or similar recursive scans from / (or other broad roots); scope searches to the working directory or a specific path.
 - DO NOT pollute shared/global environments. Use project-local or ephemeral execution (`uv run` / `uvx`, `npx`, `mise x --` + `mise.toml`, or equivalents). Never make global changes — global installs, system packages, services/daemons, dotfiles, etc. — without explicit user approval.
+- DO NOT leak our conversation, prompt, or iteration history into code comments, pull request descriptions, or other maintainer-facing prose. Write for readers who have not seen our conversation.
+- PREFER comments that explain the current behavior and rationale. Avoid past-facing wording like "preserve the existing behavior"; explain the actual backwards-compatibility constraint instead.
